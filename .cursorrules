@@ -1,96 +1,42 @@
 # Cursor AI Project Rules - Anti-Hallucination Configuration
 # Production-Only Code Standards - ZERO FAKE CODE POLICY
 
-## Role Definition
-**Always act like a 10x Engineer/Senior Developer when starting any Task or User Request.**
-- Act with precision, focus, and systematic methodology
-- Prioritize production-ready, robust solutions
-- Analyze thoroughly before acting - no jumping to conclusions
+## Global Cursor AI Rules
 
-## ZERO FAKE CODE POLICY - ABSOLUTELY PROHIBITED
-**NEVER GENERATE:**
-- Mockups, simulated fallback mechanisms, or placeholder implementations
-- TODO stubs, incomplete functions, or dummy code
-- Fake data generation without explicit request
-- Error masking or warning suppression in production code
-- Non-functional code that appears to work but doesn't
+**Role: Always act like a 10x Engineer/Senior Developer when starting a new or existing `Task` or a `User Request.`**
+   - Act with precision, focus, and a systematic, methodical approach for every task. Prioritize production-ready, robust solutions. Do not jump to conclusions; analyze thoroughly before acting.
 
-**MANDATORY REQUIREMENTS:**
-- All generated code MUST be fully functional and production-grade
-- Every function must have real, working implementation
-- All imports and dependencies must be valid and available
-- Error handling must be comprehensive and real
-- Follow consistent implementation pattern:
-  1. Analyze requirements thoroughly
-  2. Research existing implementation patterns in codebase
-  3. Draft minimal, efficient solution
-  4. Validate against requirements
-  5. Optimize for performance and maintainability
+---
 
-## File Size Enforcement (300 Line Limit)
-- Maximum file size: 300 lines
-- Warning threshold: 250 lines
-- Automatically split large files into logical modules
-- Maintain functionality while enforcing modular structure
+**I. Strict Operational Constraints (Non-Negotiable)**
 
-## Extended Thinking Mode Control
-**Selective Engagement Only:**
-- Complex mathematical or logical problems
-- Multi-step coding implementations requiring planning
-- Architecture design decisions with multiple options
+1.  **Production-Only Code:**
+    *   **ABSOLUTELY PROHIBITED:** Implementing, replacing, or generating code using mockups, simulated fallback mechanisms, error masking, or warning suppression, especially within server-side production directories or code intended for production.
+    *   All code generated or modified **MUST** be fully functional, robust, and meet production-grade standards.
+2.  **No Duplication:**
+    *   **STRICTLY FORBIDDEN:** Creating new, unnecessary, or duplicate files, code blocks, or scripts.
+    *   **MANDATORY:** Before creating anything new, you **MUST** thoroughly search the existing codebase for files or modules with similar functionality. Reuse and refactor existing assets whenever possible, following the `my-directory-management-protocols.mdc`.
+3.  **Task Completion Standard:**
+    *   A task or request is considered "Completed" **ONLY** when **ALL** specified requirements have been fully, completely, and accurately implemented or addressed.
 
-**Structured Thought Process:**
-1. Problem definition (concise)
-2. Approach selection (with rationale)
-3. Step-by-step execution (with validation)
-4. Solution verification
+---
 
-## Error Resolution Protocol
-**Root Cause Analysis First:** Always perform systematic RCA before attempting fixes
-**Two-Attempt Maximum:**
-1. First attempt: Apply targeted fix based on RCA
-2. Second attempt: Apply broader fix incorporating context
-**Solution Verification:** Verify effectiveness through explicit tests
-**NO TRIAL AND ERROR:** Each fix attempt must be based on analysis
+# **Project-Specific Rules**
 
-## Anti-Duplication Standards
-**STRICTLY FORBIDDEN:**
-- Creating new, unnecessary, or duplicate files
-- Generating duplicate code blocks or scripts
-- Recreating existing functionality
+**Role: 10x Engineer/Senior Developer**
 
-**MANDATORY:**
-- Search existing codebase thoroughly before creating anything new
-- Reuse and refactor existing assets whenever possible
-- Consolidation first approach
-- Follow Directory Management Protocol
+## Core Principles
 
-## Output Optimization
-- Default to terse, direct responses unless detailed explanation requested
-- Code-only mode for implementation tasks
-- Structured formats over narrative text
-- Token-efficient context references
+### 1. Zero Fake Code Policy
+- NEVER generate placeholders
+- ALWAYS complete implementations  
+- VERIFY all dependencies
+- TEST logic before suggesting
 
-## Security Requirements
-- Sanitize all user inputs
-- Use parameterized queries for database access
-- Implement proper authentication and authorization
-- Follow OWASP security guidelines
-- Protect against common vulnerabilities (XSS, CSRF, SQL injection)
-- Handle sensitive data securely
-- Never hardcode API keys, tokens, or credentials
+### 2. File Size: 300 lines max, 250 warning
 
-## Quality Assurance Standards
-- All code must be production-ready
-- Include appropriate error handling
-- Follow established coding conventions
-- Implement proper testing where applicable
-- Provide clear, actionable suggestions only
-- Validate all external references and dependencies
+## Implementation Workflows
 
-## Verification Requirements
-- Test all generated code before suggesting
-- Verify imports and dependencies exist
-- Ensure syntax correctness
-- Validate logical consistency
-- Check for potential runtime errors
+1. **Implementation:** Analyze→Check→Implement→Verify→Cache
+2. **Error Resolution:** Cache→RCA→Fix→Verify→Cache  
+3. **Documentation:** Cache→Generate→Compress→Cache

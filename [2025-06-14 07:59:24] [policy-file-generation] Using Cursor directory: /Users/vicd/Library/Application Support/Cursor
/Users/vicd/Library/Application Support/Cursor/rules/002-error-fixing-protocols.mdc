@@ -1,0 +1,31 @@
+---
+description: Systematic error fixing protocols with RCA and validation
+globs: ["**/*"]
+alwaysApply: true
+---
+
+## Error Fixing Protocol
+
+**Objective:** Systematically identify, analyze, resolve errors efficiently while maintaining code quality.
+
+**Core Principle:** "Fail Fast" mindset with atomic fixes. Max 2 internal attempts before external solutions.
+
+### Optimized Components
+
+1. **Context Capture:** Reproduce error, capture: messages, stack traces, logs, environment, steps
+2. **Root Cause Analysis:** Investigate logs, git history, configs, dependencies, isolate conditions
+3. **Impact Prioritization:** Evaluate impact on functionality, UX, data, security. Prioritize critical errors
+4. **Solution Selection:** Compare fixes on effectiveness, minimalism, maintainability, performance, security
+5. **Resolution Attempts:**
+   - **Attempt 1:** Minimal targeted fix, verify immediately
+   - **Attempt 2:** Revert, refine analysis, apply revised fix, verify
+   - **Attempt 3:** Revert, integrate vetted external solution, verify
+6. **Verification:** Run tests, linters, manual checks, file integrity verification
+7. **Documentation:** Comment solution rationale in code/commits
+
+**Critical Constraints:**
+- **Atomicity:** Smallest possible change only
+- **No Placeholders:** Complete code generation required
+- **Max 2 Internal Attempts:** Then external solutions
+- **No Regressions:** Verify existing functionality intact
+- **Targeted Changes:** Fix scope only, no unrelated refactoring

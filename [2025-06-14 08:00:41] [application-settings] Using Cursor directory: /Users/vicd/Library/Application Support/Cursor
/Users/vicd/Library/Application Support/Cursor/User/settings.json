@@ -1,0 +1,50 @@
+{
+  "telemetry.enableTelemetry": false,
+  "crashReporting.enabled": "off",
+  "telemetry.telemetryLevel": "off",
+  "editor.acceptSuggestionOnCommitCharacter": false,
+  "editor.acceptSuggestionOnEnter": "smart",
+  "editor.tabCompletion": "onlySnippets",
+  "editor.suggest.showSnippets": true,
+  "editor.suggest.maxVisibleSuggestions": 5,
+  "editor.suggest.insertMode": "replace",
+  "files.hotExit": "onExitAndWindowClose",
+  "window.restoreWindows": "all",
+  "workbench.editor.restoreViewState": true,
+  "workbench.startupEditor": "welcomePage",
+  "security.workspace.trust.enabled": true,
+  "security.untrustedFiles": "newWindow",
+  "security.allowUnsafeExtensions": false,
+  "workbench.enableExperiments": false,
+  "workbench.settings.enableNaturalLanguageSearch": false,
+  "update.mode": "manual",
+  "extensions.autoUpdate": false,
+  "extensions.autoCheckUpdates": true,
+  "extensions.ignoreRecommendations": false,
+  "editor.largeFileOptimizations": true,
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.DS_Store": true,
+    "**/node_modules/**": true
+  },
+  "editor.wordWrap": "bounded",
+  "editor.wordWrapColumn": 300,
+  "files.defaultLanguage": "",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "editor.rulers": [
+    300
+  ],
+  "editor.detectIndentation": true,
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true
+  },
+  "git.autofetch": false,
+  "git.confirmSync": true,
+  "git.enableSmartCommit": false,
+  "scm.diffDecorations": "all"
+}

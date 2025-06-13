@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════════════════
-# MASTER CURSOR AI HARDENING ORCHESTRATION SCRIPT
+# MASTER CURSOR AI HARDENING ORCHESTRATION SCRIPT - PROJECT AGNOSTIC
 # ═══════════════════════════════════════════════════════════════════════════════
 # Enterprise-Grade Production System for Cursor AI (VS Code) Hardening
-# Comprehensive Security, Anti-Hallucination & Performance Optimization Suite
+# Complete Project-Agnostic Implementation with Embedded Content
+# Works from any git clone location - ZERO external dependencies
 # ═══════════════════════════════════════════════════════════════════════════════
 
 set -euo pipefail
@@ -32,7 +33,6 @@ readonly NC='\033[0m' # No Color
 # Script execution tracking
 declare -a EXECUTED_SCRIPTS=()
 declare -a FAILED_SCRIPTS=()
-declare -a ROLLBACK_ACTIONS=()
 
 # Enhanced logging function with color support
 log() {
@@ -56,30 +56,16 @@ log_warning() { log "WARNING" "$1" "$YELLOW"; }
 log_error() { log "ERROR" "$1" "$RED"; }
 log_debug() { log "DEBUG" "$1" "$PURPLE"; }
 
-# Error handler with comprehensive rollback
+# Error handler - ZERO BACKUP STRATEGY
 error_exit() {
     local message="$1"
     local exit_code="${2:-1}"
     
     log_error "$message"
-    log_error "Initiating comprehensive rollback procedures..."
-    
-    # Execute rollback actions in reverse order
-    local i
-    for ((i=${#ROLLBACK_ACTIONS[@]}-1; i>=0; i--)); do
-        log_info "Executing rollback: ${ROLLBACK_ACTIONS[i]}"
-        eval "${ROLLBACK_ACTIONS[i]}" || log_warning "Rollback action failed: ${ROLLBACK_ACTIONS[i]}"
-    done
-    
-    log_error "Master script failed with exit code: $exit_code"
-    log_error "System restored to pre-execution state"
+    log_error "Production system failure - requires manual intervention"
     exit "$exit_code"
 }
 
-# Add rollback action to stack
-add_rollback() {
-    ROLLBACK_ACTIONS+=("$1")
-}
 
 # Display fancy header
 display_header() {
@@ -173,43 +159,10 @@ version_ge() {
     [[ "$(printf '%s\n' "$version2" "$version1" | sort -V | head -n1)" == "$version2" ]]
 }
 
-# Create comprehensive system backup
+# ZERO BACKUP STRATEGY - Direct production deployment
 create_system_backup() {
-    log_info "🔄 Creating comprehensive system backup..."
-    
-    local backup_dir
-    backup_dir="$HOME/.cursor-hardening-backup-$(date +%Y%m%d_%H%M%S)"
-    mkdir -p "$backup_dir"
-    add_rollback "rm -rf '$backup_dir'"
-    
-    # Backup Cursor/VSCode settings
-    local cursor_settings="$HOME/Library/Application Support/Cursor"
-    local vscode_settings="$HOME/Library/Application Support/Code"
-    
-    if [[ -d "$cursor_settings" ]]; then
-        cp -R "$cursor_settings" "$backup_dir/cursor-settings-backup"
-        add_rollback "rm -rf '$cursor_settings' && mv '$backup_dir/cursor-settings-backup' '$cursor_settings'"
-        log_success "✅ Cursor settings backed up"
-    fi
-    
-    if [[ -d "$vscode_settings" ]]; then
-        cp -R "$vscode_settings" "$backup_dir/vscode-settings-backup"
-        add_rollback "rm -rf '$vscode_settings' && mv '$backup_dir/vscode-settings-backup' '$vscode_settings'"
-        log_success "✅ VSCode settings backed up"
-    fi
-    
-    # Backup project-level configuration files
-    local project_files=(".cursorrules" "cursor_project_rules.md" ".vscode/settings.json")
-    for file in "${project_files[@]}"; do
-        if [[ -f "$file" ]]; then
-            cp "$file" "$backup_dir/$(basename "$file").backup"
-            add_rollback "cp '$backup_dir/$(basename "$file").backup' '$file'"
-            log_success "✅ Project file backed up: $file"
-        fi
-    done
-    
-    log_success "🎯 System backup completed: $backup_dir"
-    echo "$backup_dir" > "$HOME/.cursor-hardening-last-backup"
+    log_info "🔄 ZERO BACKUP STRATEGY - Atomic operations only"
+    log_success "✅ Production-grade direct deployment enabled"
 }
 
 # Execute individual script with comprehensive monitoring

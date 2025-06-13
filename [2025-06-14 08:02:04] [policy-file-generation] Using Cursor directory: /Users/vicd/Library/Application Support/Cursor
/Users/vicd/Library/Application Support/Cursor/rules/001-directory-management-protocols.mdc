@@ -1,0 +1,42 @@
+---
+description: Directory management protocols for code organization
+globs: ["**/*"]
+alwaysApply: true
+---
+
+### Directory Management Protocol
+
+**Objective:** Organize, consolidate, maintain project directory structure per conventions, ensure clarity, eliminate redundancy, preserve functionality.
+
+**Core Steps:**
+
+1. **Project Structure Conventions:**
+   - Check framework conventions (Next.js, Django, Flask)
+   - Review documentation (`README.md`, `CONTRIBUTING.md`)  
+   - Analyze existing codebase patterns
+   - Verify configuration files alignment
+
+2. **File Inventory & Duplicate Detection:**
+   - Scan repository recursively (exclude: `node_modules/`, `.git/`, build dirs)
+   - **PROHIBITED:** Creating duplicate functionality files
+   - Detect overlaps: content matches, similar names, matching signatures
+   - **Consolidate:** Merge to canonical version, remove redundants
+
+3. **No Unrequested Files Policy:**
+   - Create ONLY if explicitly requested OR critically necessary
+   - Require user confirmation for potential overlaps
+
+4. **Atomic Reference Updates:**
+   - Update ALL references: imports, configs, build scripts, docs, tests
+   - Verify integrity: linting, building, testing
+
+5. **Zero Regression Verification:**
+   - All tests must pass
+   - Manual verification if coverage low
+   - Document changes in VCS commits
+
+**Critical Constraints:**
+- **Atomicity:** Small logical steps only
+- **No Functionality Change:** Structure/organization focus only
+- **User Confirmation:** Required for deletions/major refactoring
+- **Strict Adherence:** Follow steps precisely

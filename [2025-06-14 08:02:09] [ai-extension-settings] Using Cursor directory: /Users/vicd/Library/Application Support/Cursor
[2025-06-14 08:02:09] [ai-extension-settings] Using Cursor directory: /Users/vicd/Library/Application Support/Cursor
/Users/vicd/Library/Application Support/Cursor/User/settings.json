@@ -1,0 +1,49 @@
+{
+  "cline.enableAutoApproval": false,
+  "cline.enableValidation": true,
+  "cline.maxFileSize": 300,
+  "cline.sessionTimeout": 300000,
+  "cline.enableHallucinationDetection": true,
+  "cline.conservativeMode": true,
+  "cline.requireExplicitInstructions": true,
+  "cline.preventPlaceholderGeneration": true,
+  "cline.enableSecurityScanning": true,
+  "cline.maxTokensPerRequest": 2048,
+  "cline.enableSyntaxValidation": true,
+  "cline.enableDependencyCheck": true,
+  "cline.enableContextValidation": true,
+  "cline.enableCodeReview": true,
+  "cline.strictModeEnabled": true,
+  "cline.memorySettings": {
+    "enableMemory": true,
+    "sessionExpiration": 86400,
+    "maxMemorySize": 1000000
+  },
+  "cline.modelSettings": {
+    "temperature": 0.1,
+    "topP": 0.3,
+    "maxTokens": 2048,
+    "stopSequences": [
+      "TODO:",
+      "FIXME:",
+      "PLACEHOLDER:",
+      "// ...",
+      "# ..."
+    ]
+  },
+  "cline.validationRules": {
+    "requireTests": true,
+    "preventSecretExposure": true,
+    "enableTypeChecking": true,
+    "requireDocumentation": true,
+    "enforceFileSize": true,
+    "blockFakeCode": true
+  },
+  "cline.antiHallucinationSettings": {
+    "enabled": true,
+    "strictValidation": true,
+    "requireSourceValidation": true,
+    "preventCodeGeneration": false,
+    "requireExplicitApproval": true
+  }
+}
