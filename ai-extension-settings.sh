@@ -63,6 +63,9 @@ detect_cursor_settings() {
     USERDATA="$HOME/Library/Application Support/Cursor"
     if [ ! -d "$USERDATA" ]; then
         USERDATA="$HOME/Library/Application Support/Code"
+        log "Cursor directory not found, using VSCode directory: $USERDATA"
+    else
+        log "Using Cursor directory: $USERDATA"
     fi
     echo "$USERDATA"
 }

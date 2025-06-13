@@ -1,0 +1,61 @@
+---
+description: Systematic error fixing protocols with RCA and validation
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Error Fixing Protocol
+
+## Objective
+Systematically identify, analyze, and resolve errors efficiently while maintaining code quality and minimizing disruption.
+
+## Core Principle
+Employ "Fail Fast" mindset with small, incremental, atomic fixes. After each attempt, rigorously verify resolution.
+
+### 1. Reproducibility & Context Capture
+- Ensure error is reproducible
+- Capture complete context: error messages, stack traces, logs, environment details
+- Document steps to reproduce
+
+### 2. Comprehensive Root Cause Analysis (RCA)
+- Investigate logs, code changes (git blame/history)
+- Review configurations, environment variables, dependency versions
+- Analyze potential interactions
+- Isolate specific conditions triggering error
+
+### 3. Impact-Based Prioritization
+Evaluate error impact on:
+- Core functionality
+- UI/UX
+- Data integrity
+- Security
+Priority: critical-impact errors first
+
+### 4. Solution Comparison & Selection
+- Research external solutions if internal attempts fail
+- Compare fixes based on:
+  - Effectiveness (resolves root cause?)
+  - Minimalism (least amount of change?)
+  - Maintainability (readable, aligned with standards?)
+  - Performance (no negative impact?)
+  - Security (no vulnerabilities introduced?)
+
+### 5. Targeted Resolution Attempts (Max 2 Internal)
+**Attempt 1:** Implement most likely minimal, targeted fix based on RCA  
+**Attempt 2:** If failed, revert change, refine analysis, apply revised fix  
+**Attempt 3:** If failed, revert change, integrate best vetted external solution  
+
+### 6. Rigorous Verification
+After each attempt:
+- Run unit tests, integration tests, linters
+- Manually verify specific functionality
+- File integrity check (no unintended modifications)
+
+## Critical Constraints
+- **Atomicity:** Each fix must be smallest possible change  
+- **Targeted Changes:** No functionality lost/added beyond specific fix  
+- **No Placeholders:** Strictly prohibited - generate complete, correct code  
+- **Attempt Limit:** Maximum 2 direct internal attempts before external solutions  
+- **Verification Required:** Every fix followed by verification  
+- **No Regressions:** Fix must not introduce new errors  
+- **Focus:** Avoid unnecessary alterations beyond precise fix requirement

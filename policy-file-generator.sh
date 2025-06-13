@@ -699,35 +699,47 @@ main() {
     if [[ ! -d "$cursor_dir" ]]; then
         cursor_dir="$HOME/Library/Application Support/Code"
     fi
-    # Ensure global directories exist
+    # Ensure global directories exist (with sudo)
     local rules_dir="$cursor_dir/rules"
     local templates_dir="$cursor_dir/project-templates"
-    mkdir -p "$rules_dir"
-    mkdir -p "$templates_dir"
+    sudo mkdir -p "$rules_dir"
+    sudo mkdir -p "$templates_dir"
 
-    # Create or update global files
-    create_coding_protocols_mdc "$rules_dir"
-    create_directory_management_mdc "$rules_dir"
-    create_error_fixing_mdc "$rules_dir"
-    create_token_optimization_mdc "$rules_dir"
-    create_backend_structure_mdc "$templates_dir"
-    create_tech_stack_mdc "$templates_dir"
-    create_cursorrules "$cursor_dir"
-    create_project_rules_md "$cursor_dir"
+    # Create or update global files (with sudo for global operations)
+    sudo bash -c "$(declare -f create_coding_protocols_mdc check_no_fake_code create_file_with_verification backup_file log error_exit); create_coding_protocols_mdc '$rules_dir'"
+    sudo bash -c "$(declare -f create_directory_management_mdc check_no_fake_code create_file_with_verification backup_file log error_exit); create_directory_management_mdc '$rules_dir'"
+    sudo bash -c "$(declare -f create_error_fixing_mdc check_no_fake_code create_file_with_verification backup_file log error_exit); create_error_fixing_mdc '$rules_dir'"
+    sudo bash -c "$(declare -f create_token_optimization_mdc check_no_fake_code create_file_with_verification backup_file log error_exit); create_token_optimization_mdc '$rules_dir'"
+    sudo bash -c "$(declare -f create_backend_structure_mdc check_no_fake_code create_file_with_verification backup_file log error_exit); create_backend_structure_mdc '$templates_dir'"
+    sudo bash -c "$(declare -f create_tech_stack_mdc check_no_fake_code create_file_with_verification backup_file log error_exit); create_tech_stack_mdc '$templates_dir'"
+    sudo bash -c "$(declare -f create_cursorrules check_no_fake_code create_file_with_verification backup_file log error_exit); create_cursorrules '$cursor_dir'"
+    sudo bash -c "$(declare -f create_project_rules_md check_no_fake_code create_file_with_verification backup_file log error_exit); create_project_rules_md '$cursor_dir'"
 
-    # Detect local project root (if any)
+    # Always create files in current working directory (project-specific)
+    local current_dir="$PWD"
+    log "Creating project-specific policy files in current directory: $current_dir"
+    create_coding_protocols_mdc "$current_dir"
+    create_directory_management_mdc "$current_dir"
+    create_error_fixing_mdc "$current_dir"
+    create_token_optimization_mdc "$current_dir"
+    create_backend_structure_mdc "$current_dir"
+    create_tech_stack_mdc "$current_dir"
+    create_cursorrules "$current_dir"
+    create_project_rules_md "$current_dir"
+    
+    # Also check for traditional project root (additional coverage)
     if project_root=$(find_project_root); then
-        log "Project indicators found at $project_root. Applying local rules."
-        create_coding_protocols_mdc "$project_root"
-        create_directory_management_mdc "$project_root"
-        create_error_fixing_mdc "$project_root"
-        create_token_optimization_mdc "$project_root"
-        create_backend_structure_mdc "$project_root"
-        create_tech_stack_mdc "$project_root"
-        create_cursorrules "$project_root"
-        create_project_rules_md "$project_root"
-    else
-        log "No project indicators found; skipping local configuration."
+        if [[ "$project_root" != "$current_dir" ]]; then
+            log "Additional project root found at $project_root. Applying rules there too."
+            create_coding_protocols_mdc "$project_root"
+            create_directory_management_mdc "$project_root"
+            create_error_fixing_mdc "$project_root"
+            create_token_optimization_mdc "$project_root"
+            create_backend_structure_mdc "$project_root"
+            create_tech_stack_mdc "$project_root"
+            create_cursorrules "$project_root"
+            create_project_rules_md "$project_root"
+        fi
     fi
 
     # Verify global policy files

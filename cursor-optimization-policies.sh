@@ -88,6 +88,8 @@ implement_rag_config() {
     local optimization_dir="$1"
     local rag_config="${optimization_dir}/rag/rag-config.json"
 
+    log "Creating RAG configuration at: $rag_config"
+
     # Create timestamped backup if exists
     if [[ -f "$rag_config" ]]; then
         local backup_timestamp

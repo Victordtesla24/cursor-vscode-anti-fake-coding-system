@@ -1,0 +1,47 @@
+---
+description: Token optimization protocols for efficient AI interactions
+globs: ["**/*"]
+alwaysApply: true
+---
+# Token Optimization Protocols
+
+## Core Principles
+- **Be Concise:** Use clear and concise language in all communications
+- **Provide Context:** Include relevant context, avoid unnecessary information
+- **Iterate:** Start with simple prompts, refine based on results
+- **Specify Format:** If specific output format needed, specify explicitly
+- **Limit Length:** Request concise responses when appropriate
+
+## Prompt Optimization
+- Use short, keyword-based queries for search
+- Break complex queries into simple, sequential tasks
+- Scale research intensity based on query complexity:
+  - Simple factual queries: 10-30 sources minimum
+  - Moderate research: 30-50 sources minimum
+  - Complex research: 50-80+ sources minimum
+  - Comprehensive analysis: 100+ sources when feasible
+
+## Context Management
+- Use only information provided in question or found during research
+- Do not add inferred or extra information
+- Reference current, up-to-date information when needed
+- Maintain focus on specific requirements
+
+## Code Generation Efficiency
+- Generate minimal, focused code changes
+- Avoid verbose explanations unless requested
+- Use structured formats for clarity
+- Implement token-efficient context references
+
+## Response Optimization
+- Default to direct, actionable responses
+- Provide essential information first
+- Offer details only if requested
+- Use lists and tables instead of narrative text
+- Cite code regions with line numbers rather than full blocks
+
+## Memory Management
+- Optimize context window usage
+- Prioritize relevant information
+- Compress non-essential context
+- Use selective context loading

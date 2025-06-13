@@ -350,7 +350,10 @@ perform_comprehensive_validation() {
     # Validate policy files existence and content
     log_info "   Validating policy files..."
     local cursor_dir="$HOME/Library/Application Support/Cursor"
-    local policy_files=(
+    local current_dir="$PWD"
+    
+    # Check global policy files
+    local global_policy_files=(
         "$cursor_dir/rules/001-coding-protocols.mdc"
         "$cursor_dir/rules/002-directory-management.mdc"
         "$cursor_dir/rules/003-error-fixing.mdc"
@@ -358,11 +361,31 @@ perform_comprehensive_validation() {
         "$cursor_dir/.cursorrules"
     )
     
-    for file in "${policy_files[@]}"; do
+    # Check project-local policy files
+    local project_policy_files=(
+        "$current_dir/001-coding-protocols.mdc"
+        "$current_dir/002-directory-management.mdc"
+        "$current_dir/003-error-fixing.mdc"
+        "$current_dir/004-token-optimization.mdc"
+        "$current_dir/.cursorrules"
+    )
+    
+    log_info "   🌍 Global policy files in: $cursor_dir"
+    for file in "${global_policy_files[@]}"; do
         if [[ -f "$file" && -s "$file" ]]; then
-            log_success "   ✅ Policy file exists: $(basename "$file")"
+            log_success "   ✅ Global policy file: $file"
         else
-            log_error "   ❌ Policy file missing or empty: $(basename "$file")"
+            log_error "   ❌ Global policy missing: $file"
+            ((validation_errors++))
+        fi
+    done
+    
+    log_info "   📁 Project policy files in: $current_dir"
+    for file in "${project_policy_files[@]}"; do
+        if [[ -f "$file" && -s "$file" ]]; then
+            log_success "   ✅ Project policy file: $file"
+        else
+            log_error "   ❌ Project policy missing: $file"
             ((validation_errors++))
         fi
     done

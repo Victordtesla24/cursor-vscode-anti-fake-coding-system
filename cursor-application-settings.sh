@@ -119,11 +119,17 @@ fi
 
 # Ensure the file exists and is valid JSON
 if [ ! -f "$SETTINGS_FILE" ]; then
-    log "settings.json not found – creating a new one."
+    log "settings.json not found – creating a new one at: $SETTINGS_FILE"
     mkdir -p "$(dirname "$SETTINGS_FILE")"
     echo '{}' > "$SETTINGS_FILE"
+    log "Created new settings file: $SETTINGS_FILE"
 fi
-log "Using settings file: $SETTINGS_FILE"
+log "Using settings file (full path): $SETTINGS_FILE"
+
+# Additional logging for backup location tracking
+SETTINGS_DIR="$(dirname "$SETTINGS_FILE")"
+log "Settings directory: $SETTINGS_DIR"
+log "Working with Cursor User directory: $(dirname "$SETTINGS_DIR")"
 
 command -v jq >/dev/null 2>&1 || error_exit "jq not installed"
 jq empty "$SETTINGS_FILE" >/dev/null 2>&1 || error_exit "settings.json is invalid JSON"
