@@ -12,7 +12,7 @@
 - Break complex into sequential tasks
 - Scale research intensity:
   - Simple: 10-30 sources
-  - Moderate: 30-50 sources  
+  - Moderate: 30-50 sources
   - Complex: 50-80+ sources
   - Comprehensive: 100+ sources
 

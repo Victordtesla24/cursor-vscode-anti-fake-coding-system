@@ -29,7 +29,7 @@
 
 ### 1. Zero Fake Code Policy
 - NEVER generate placeholders
-- ALWAYS complete implementations  
+- ALWAYS complete implementations
 - VERIFY all dependencies
 - TEST logic before suggesting
 
@@ -38,5 +38,5 @@
 ## Implementation Workflows
 
 1. **Implementation:** Analyze→Check→Implement→Verify→Cache
-2. **Error Resolution:** Cache→RCA→Fix→Verify→Cache  
+2. **Error Resolution:** Cache→RCA→Fix→Verify→Cache
 3. **Documentation:** Cache→Generate→Compress→Cache
