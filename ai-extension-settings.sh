@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-set -eu
+set -euo pipefail
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 10x Engineer/Senior Developer Mode - Production-Only Code Standards
+# ZERO FAKE CODE POLICY: No placeholders, TODOs, or mock implementations
+# ─────────────────────────────────────────────────────────────────────────────
 
 SCRIPT_NAME="ai-extension-settings"
 LOG_FILE="/var/log/cursor-setup.log"
@@ -14,6 +19,43 @@ log() {
 error_exit() {
     log "ERROR: $*"
     exit 1
+}
+
+# Check for fake/placeholder code patterns (exclude JSON config contexts)
+check_no_fake_code() {
+    local file="$1"
+    if [ -f "$file" ]; then
+        # Exclude lines that are JSON string values in stopSequences or similar config arrays
+        if grep -v '"TODO:".*\|"FIXME:".*\|"PLACEHOLDER:".*\|"// \.\.\.".*\|"# \.\.\.".*' "$file" | \
+           grep -q "TODO:\|FIXME:\|PLACEHOLDER:\|// TODO\|# TODO\|// FIXME\|# FIXME\|// \.\.\.\|# \.\.\." 2>/dev/null; then
+            error_exit "BLOCKED: Fake/placeholder code detected in $file"
+        fi
+    fi
+}
+
+# Apply with backup and restore on failure
+apply_with_backup() {
+    local settings_file="$1"
+    local backup_file="${settings_file}.temp.backup"
+    
+    # Create temporary backup
+    if [ -f "$settings_file" ]; then
+        cp "$settings_file" "$backup_file" || error_exit "Failed to create temporary backup"
+    fi
+    
+    # Execute the configuration function passed as remaining arguments
+    shift
+    if ! "$@"; then
+        # Restore backup on failure
+        if [ -f "$backup_file" ]; then
+            mv "$backup_file" "$settings_file"
+            log "Restored backup due to configuration failure"
+        fi
+        error_exit "Configuration failed and backup restored"
+    fi
+    
+    # Clean up temporary backup on success
+    [ -f "$backup_file" ] && rm -f "$backup_file"
 }
 
 # Detect Cursor settings directory (Cursor vs. Code fallback)
@@ -132,6 +174,22 @@ configure_tabnine_settings() {
     log "TabNine settings applied"
 }
 
+# Configure Continue extension settings
+configure_continue_settings() {
+    SETTINGS="$1"
+    TMP=$(mktemp)
+    [ -f "$SETTINGS" ] || echo '{}' > "$SETTINGS"
+    continue_settings='{
+        "continue.enableTabAutocomplete": false,
+        "continue.telemetryEnabled": false,
+        "continue.enableAdvancedFeatures": false,
+        "continue.experimentalFeatures": false
+    }'
+    jq -s '.[0] * .[1]' "$SETTINGS" <(echo "$continue_settings") > "$TMP" || error_exit "Failed to merge Continue settings"
+    mv "$TMP" "$SETTINGS"
+    log "Continue extension settings applied"
+}
+
 # Verify that ≥80% of expected settings are present
 verify_extension_settings() {
     SETTINGS="$1"
@@ -171,6 +229,12 @@ verify_extension_settings() {
         grep -q '"tabnine.experimentalAutoImports": false' "$SETTINGS" && hits=$((hits+1))
     fi
 
+    # Continue checks
+    if echo "$EXTENSIONS" | grep -q "Continue.continue"; then
+        checks=$((checks+1))
+        grep -q '"continue.telemetryEnabled": false' "$SETTINGS" && hits=$((hits+1))
+    fi
+
     if [ "$checks" -eq 0 ]; then
         log "No targeted AI extensions found"
         return 0
@@ -203,10 +267,11 @@ log "Using settings file: $SETTINGS_FILE"
 if ! command -v jq >/dev/null 2>&1; then
     error_exit "jq is required but not installed."
 fi
-# Verify JSON
+# Verify JSON and check for fake code
 if ! jq empty "$SETTINGS_FILE" >/dev/null 2>&1; then
     error_exit "Existing settings file is not valid JSON."
 fi
+check_no_fake_code "$SETTINGS_FILE"
 
 # Gather installed extensions
 EXTENSIONS=$(code --list-extensions 2>/dev/null || echo "")
@@ -222,12 +287,14 @@ fi
 # Backup original settings
 create_backup "$SETTINGS_FILE"
 
-# Apply settings per extension
-echo "$EXTENSIONS" | grep -q "saoudrizwan.claude-dev"   && configure_cline_settings   "$SETTINGS_FILE"
-echo "$EXTENSIONS" | grep -q "GitHub.copilot"           && configure_copilot_settings "$SETTINGS_FILE"
-echo "$EXTENSIONS" | grep -q "TabNine.tabnine-vscode"   && configure_tabnine_settings "$SETTINGS_FILE"
+# Apply settings per extension with backup protection
+echo "$EXTENSIONS" | grep -q "saoudrizwan.claude-dev"   && apply_with_backup "$SETTINGS_FILE" configure_cline_settings   "$SETTINGS_FILE"
+echo "$EXTENSIONS" | grep -q "GitHub.copilot"           && apply_with_backup "$SETTINGS_FILE" configure_copilot_settings "$SETTINGS_FILE"
+echo "$EXTENSIONS" | grep -q "TabNine.tabnine-vscode"   && apply_with_backup "$SETTINGS_FILE" configure_tabnine_settings "$SETTINGS_FILE"
+echo "$EXTENSIONS" | grep -q "Continue.continue"        && apply_with_backup "$SETTINGS_FILE" configure_continue_settings "$SETTINGS_FILE"
 
-# Verify success
+# Final verification with anti-hallucination check
 verify_extension_settings "$SETTINGS_FILE" "$EXTENSIONS"
+check_no_fake_code "$SETTINGS_FILE"
 
 log "AI extension hardening completed successfully"

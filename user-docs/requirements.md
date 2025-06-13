@@ -63,7 +63,7 @@ Populate them verbatim from the attached reference files:
 Return each script in its own fenced code block:
 ```bash
 # ───────────────────────────────
-#  Script 1: application-settings.sh
+#  Script 1: cursor-application-settings.sh
 # ───────────────────────────────
 #!/usr/bin/env bash
 set -euo pipefail

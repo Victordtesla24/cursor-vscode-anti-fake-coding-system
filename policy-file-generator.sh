@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ─────────────────────────────────────────────────────────────────────────────
+# 10x Engineer/Senior Developer Mode - Production-Only Code Standards
+# ZERO FAKE CODE POLICY: No placeholders, TODOs, or mock implementations
+# ─────────────────────────────────────────────────────────────────────────────
+
 # Policy and Protocol File Generation Script
 # Creates or updates policy files for Cursor AI (VS Code) - canonical source of truth
 readonly SCRIPT_NAME="policy-file-generation"
@@ -29,6 +34,28 @@ error_exit() {
     exit 1
 }
 
+# Check for fake/placeholder code patterns (more precise to avoid false positives)
+check_no_fake_code() {
+    local file="$1"
+    if [ -f "$file" ] && grep -q "TODO:\|FIXME:\|PLACEHOLDER:\|// TODO\|# TODO\|// FIXME\|# FIXME\|// \.\.\.\|# \.\.\." "$file" 2>/dev/null; then
+        error_exit "BLOCKED: Fake/placeholder code detected in $file"
+    fi
+}
+
+# Apply file creation with verification
+create_file_with_verification() {
+    local target_file="$1"
+    local temp_file="$2"
+    
+    # Move temporary file to target
+    mv "$temp_file" "$target_file" || error_exit "Failed to create $target_file"
+    
+    # Verify the created file
+    check_no_fake_code "$target_file"
+    
+    log "Created/updated file: $target_file"
+}
+
 # Function to backup an existing file with timestamp
 backup_file() {
     local file_path="$1"
@@ -45,7 +72,7 @@ backup_file() {
 find_project_root() {
     local dir="$PWD"
     while [[ "$dir" != "/" ]]; do
-        if [[ -f "$dir/package.json" ]] || [[ -f "$dir/requirements.txt" ]] || [[ -f "$dir/Cargo.toml" ]]; then
+        if [[ -f "$dir/package.json" ]] || [[ -f "$dir/requirements.txt" ]] || [[ -f "$dir/Cargo.toml" ]] || [[ -f "$dir/go.mod" ]]; then
             echo "$dir"
             return 0
         fi
@@ -58,12 +85,19 @@ find_project_root() {
 create_cursorrules() {
     local project_dir="$1"
     local cursorrules_file="$project_dir/.cursorrules"
+    
+    # Skip if canonical version exists and is recent
+    if [[ -f "$cursorrules_file" ]] && grep -q "Anti-Hallucination Configuration" "$cursorrules_file"; then
+        log "Canonical .cursorrules already exists, skipping creation"
+        return 0
+    fi
+    
     backup_file "$cursorrules_file"
     local temp_file
     temp_file=$(mktemp)
     cat > "$temp_file" << 'EOF'
 # Cursor AI Project Rules - Anti-Hallucination Configuration
-# Based on cline-coding-protocols.md
+# Production-Only Code Standards - ZERO FAKE CODE POLICY
 
 ## Role Definition
 **Always act like a 10x Engineer/Senior Developer when starting any Task or User Request.**
@@ -71,15 +105,19 @@ create_cursorrules() {
 - Prioritize production-ready, robust solutions
 - Analyze thoroughly before acting - no jumping to conclusions
 
-## Production-Only Code Standards
-**ABSOLUTELY PROHIBITED:**
-- Implementing, replacing, or generating mockups, simulated fallback mechanisms
-- Error masking or warning suppression in production code
-- Placeholder implementations or TODO stubs
+## ZERO FAKE CODE POLICY - ABSOLUTELY PROHIBITED
+**NEVER GENERATE:**
+- Mockups, simulated fallback mechanisms, or placeholder implementations
+- TODO stubs, incomplete functions, or dummy code
 - Fake data generation without explicit request
+- Error masking or warning suppression in production code
+- Non-functional code that appears to work but doesn't
 
 **MANDATORY REQUIREMENTS:**
 - All generated code MUST be fully functional and production-grade
+- Every function must have real, working implementation
+- All imports and dependencies must be valid and available
+- Error handling must be comprehensive and real
 - Follow consistent implementation pattern:
   1. Analyze requirements thoroughly
   2. Research existing implementation patterns in codebase
@@ -87,50 +125,49 @@ create_cursorrules() {
   4. Validate against requirements
   5. Optimize for performance and maintainability
 
+## File Size Enforcement (300 Line Limit)
+- Maximum file size: 300 lines
+- Warning threshold: 250 lines
+- Automatically split large files into logical modules
+- Maintain functionality while enforcing modular structure
+
 ## Extended Thinking Mode Control
 **Selective Engagement Only:**
 - Complex mathematical or logical problems
-- Multi-step coding implementations
-- Architecture design decisions
+- Multi-step coding implementations requiring planning
+- Architecture design decisions with multiple options
+
+**Structured Thought Process:**
+1. Problem definition (concise)
+2. Approach selection (with rationale)
+3. Step-by-step execution (with validation)
+4. Solution verification
 
 ## Error Resolution Protocol
-**Root Cause Analysis First:** Always perform systematic RCA before attempting fixes  
-**Two-Attempt Maximum:**  
-1. First attempt: Apply targeted fix based on RCA  
-2. Second attempt: Apply broader fix incorporating context  
+**Root Cause Analysis First:** Always perform systematic RCA before attempting fixes
+**Two-Attempt Maximum:**
+1. First attempt: Apply targeted fix based on RCA
+2. Second attempt: Apply broader fix incorporating context
 **Solution Verification:** Verify effectiveness through explicit tests
+**NO TRIAL AND ERROR:** Each fix attempt must be based on analysis
 
 ## Anti-Duplication Standards
 **STRICTLY FORBIDDEN:**
 - Creating new, unnecessary, or duplicate files
 - Generating duplicate code blocks or scripts
+- Recreating existing functionality
 
 **MANDATORY:**
 - Search existing codebase thoroughly before creating anything new
 - Reuse and refactor existing assets whenever possible
 - Consolidation first approach
+- Follow Directory Management Protocol
 
 ## Output Optimization
 - Default to terse, direct responses unless detailed explanation requested
 - Code-only mode for implementation tasks
 - Structured formats over narrative text
 - Token-efficient context references
-
-# Core Anti-Hallucination Rules
-- NEVER generate fake, simulated, or placeholder code
-- NEVER hardcode API keys, tokens, or sensitive data
-- NEVER make assumptions about undefined variables or functions
-- ALWAYS ask for clarification when requirements are ambiguous
-- ALWAYS validate code syntax and logic before suggesting
-- ALWAYS check that imports and dependencies exist
-- ALWAYS prefer existing patterns and conventions in the codebase
-
-## Quality Assurance
-- All code must be production-ready
-- Include appropriate error handling
-- Follow established coding conventions
-- Implement proper testing
-- Provide clear, actionable suggestions only
 
 ## Security Requirements
 - Sanitize all user inputs
@@ -139,25 +176,59 @@ create_cursorrules() {
 - Follow OWASP security guidelines
 - Protect against common vulnerabilities (XSS, CSRF, SQL injection)
 - Handle sensitive data securely
+- Never hardcode API keys, tokens, or credentials
+
+## Quality Assurance Standards
+- All code must be production-ready
+- Include appropriate error handling
+- Follow established coding conventions
+- Implement proper testing where applicable
+- Provide clear, actionable suggestions only
+- Validate all external references and dependencies
+
+## Verification Requirements
+- Test all generated code before suggesting
+- Verify imports and dependencies exist
+- Ensure syntax correctness
+- Validate logical consistency
+- Check for potential runtime errors
 EOF
-    mv "$temp_file" "$cursorrules_file"
-    log "Created/updated .cursorrules at $cursorrules_file"
+    create_file_with_verification "$cursorrules_file" "$temp_file"
 }
 
-# Create or overwrite cursor_project_rules.md file
+# Create comprehensive project rules markdown
 create_project_rules_md() {
     local target_dir="$1"
     local prules_file="$target_dir/cursor_project_rules.md"
+    
+    # Skip if canonical version exists
+    if [[ -f "$prules_file" ]] && grep -q "10x Engineer/Senior Developer" "$prules_file"; then
+        log "Canonical cursor_project_rules.md already exists, skipping creation"
+        return 0
+    fi
+    
     backup_file "$prules_file"
     local temp_file
     temp_file=$(mktemp)
     cat > "$temp_file" << 'EOF'
-# Cursor Project Rules
+# Cursor Project Rules - Production Standards
 
-**Role:** Always act like a 10x Engineer/Senior Developer when starting a new or existing \`Task\` or a \`User Request.\`  
-- Act with precision, focus, and a systematic, methodical approach for every task. Prioritize production-ready, robust solutions. Do not jump to conclusions; analyze thoroughly before acting.
+**Role:** Always act like a 10x Engineer/Senior Developer when starting a new or existing `Task` or a `User Request.`
+- Act with precision, focus, and a systematic, methodical approach for every task
+- Prioritize production-ready, robust solutions
+- Do not jump to conclusions; analyze thoroughly before acting
 
----
+## Core Principles
+
+### 1. Zero Fake Code Policy
+- **NEVER** generate placeholder, mock, or simulated code
+- **ALWAYS** provide complete, functional implementations
+- **VERIFY** all imports, dependencies, and references
+- **TEST** code logic before suggesting
+
+### 2. File Size Management
+- **Maximum file size:** 300 lines
+- **Warning threshold:** 250 lines
 
 ## Implementation Workflows
 
@@ -181,8 +252,7 @@ create_project_rules_md() {
    - **Step 3:** Organize using structural compression techniques  
    - **Step 4:** Cache explanation if meeting criteria  
 EOF
-    mv "$temp_file" "$prules_file"
-    log "Created/updated cursor_project_rules.md at $prules_file"
+    create_file_with_verification "$prules_file" "$temp_file"
 }
 
 # Create or overwrite 001-coding-protocols.mdc
@@ -258,8 +328,7 @@ alwaysApply: true
 - Structured formats over narrative text
 - Token-efficient context references
 EOF
-    mv "$temp_file" "$mdc_file"
-    log "Created/updated coding protocols MDC at $mdc_file"
+    create_file_with_verification "$mdc_file" "$temp_file"
 }
 
 # Create or overwrite 002-directory-management.mdc
@@ -330,8 +399,7 @@ Do NOT create files unless:
 - Always confirm with user before major changes
 - Strict adherence to protocol steps
 EOF
-    mv "$temp_file" "$mdc_file"
-    log "Created/updated directory management MDC at $mdc_file"
+    create_file_with_verification "$mdc_file" "$temp_file"
 }
 
 # Create or overwrite 003-error-fixing.mdc
@@ -405,8 +473,7 @@ After each attempt:
 - **No Regressions:** Fix must not introduce new errors  
 - **Focus:** Avoid unnecessary alterations beyond precise fix requirement
 EOF
-    mv "$temp_file" "$mdc_file"
-    log "Created/updated error fixing MDC at $mdc_file"
+    create_file_with_verification "$mdc_file" "$temp_file"
 }
 
 # Create or overwrite 004-token-optimization.mdc
@@ -467,8 +534,7 @@ alwaysApply: true
 - Compress non-essential context
 - Use selective context loading
 EOF
-    mv "$temp_file" "$mdc_file"
-    log "Created/updated token optimization MDC at $mdc_file"
+    create_file_with_verification "$mdc_file" "$temp_file"
 }
 
 # Create or overwrite backend_structure_document.mdc
@@ -530,8 +596,7 @@ alwaysApply: false
 - Environment management
 - Health check implementations
 EOF
-    mv "$temp_file" "$mdc_file"
-    log "Created/updated backend structure document at $mdc_file"
+    create_file_with_verification "$mdc_file" "$temp_file"
 }
 
 # Create or overwrite tech_stack_document.mdc
@@ -593,8 +658,7 @@ alwaysApply: false
 - Architecture Documentation: ADR (Architecture Decision Records)
 - User Documentation: GitBook/Notion/Confluence
 EOF
-    mv "$temp_file" "$mdc_file"
-    log "Created/updated tech stack document at $mdc_file"
+    create_file_with_verification "$mdc_file" "$temp_file"
 }
 
 # Verify that >=80% of policy files exist
@@ -668,7 +732,25 @@ main() {
 
     # Verify global policy files
     verify_policy_files "$cursor_dir"
-    log "Script completed successfully"
+    # Final verification of all created files
+    local verification_files=(
+        "$cursor_dir/.cursorrules"
+        "$cursor_dir/cursor_project_rules.md"
+        "$rules_dir/001-coding-protocols.mdc"
+        "$rules_dir/002-directory-management.mdc"
+        "$rules_dir/003-error-fixing.mdc"
+        "$rules_dir/004-token-optimization.mdc"
+        "$templates_dir/backend_structure_document.mdc"
+        "$templates_dir/tech_stack_document.mdc"
+    )
+    
+    for file in "${verification_files[@]}"; do
+        if [ -f "$file" ]; then
+            check_no_fake_code "$file"
+        fi
+    done
+    
+    log "Policy file generation script completed successfully"
 
     # File watcher to monitor changes
     local watch_files=(

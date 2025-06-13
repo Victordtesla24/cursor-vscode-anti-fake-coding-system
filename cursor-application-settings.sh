@@ -2,6 +2,11 @@
 # shellcheck shell=bash
 set -euo pipefail
 
+# ─────────────────────────────────────────────────────────────────────────────
+# 10x Engineer/Senior Developer Mode - Production-Only Code Standards
+# ZERO FAKE CODE POLICY: No placeholders, TODOs, or mock implementations
+# ─────────────────────────────────────────────────────────────────────────────
+
 LOG_FILE="/var/log/cursor-setup.log"
 SCRIPT_TAG="[application-settings]"
 
@@ -12,6 +17,91 @@ log() {
     ts="$(date '+%Y-%m-%d %H:%M:%S')"
     msg="$1"
     echo "[$ts] $SCRIPT_TAG $msg" | tee -a "$LOG_FILE" || echo "[$ts] $SCRIPT_TAG $msg"
+}
+
+# Error handler with exit
+error_exit() {
+    log "ERROR: $*"
+    exit 1
+}
+
+# Check for fake/placeholder code patterns (context-aware to avoid false positives)
+check_no_fake_code() {
+    local file="$1"
+    if [ -f "$file" ]; then
+        # Skip JSON configuration files with stopSequences (legitimate anti-fake-code config)
+        if [[ "$file" == *.json ]] && grep -q '"stopSequences"' "$file" 2>/dev/null; then
+            return 0
+        fi
+        # Check for actual placeholder patterns in code/comments (not config values)
+        if grep -q "^\s*//.*TODO\|^\s*#.*TODO\|^\s*//.*FIXME\|^\s*#.*FIXME\|^\s*//.*PLACEHOLDER\|^\s*#.*PLACEHOLDER\|^\s*//\s*\.\.\.\|^\s*#\s*\.\.\." "$file" 2>/dev/null; then
+            error_exit "BLOCKED: Fake/placeholder code detected in $file"
+        fi
+    fi
+}
+
+# Apply settings with backup and restore on failure
+apply_settings_with_backup() {
+    local settings_file="$1"
+    local temp_backup="${settings_file}.temp.backup"
+    
+    # Create temporary backup
+    cp "$settings_file" "$temp_backup" || error_exit "Failed to create temporary backup"
+    
+    # Apply the jq transformation
+    local tmp
+    tmp="$(dirname "$settings_file")/settings.tmp.$$"
+    if ! jq '
+        # Clean telemetry settings (remove deprecated keys)
+        del(.["telemetry.enableCrashReporter"])
+        | .["telemetry.enableTelemetry"] = false
+        | .["crashReporting.enabled"] = "off"
+        | .["telemetry.telemetryLevel"] = "off"
+        # Safe autocompletion
+        | .["editor.acceptSuggestionOnCommitCharacter"] = false
+        | .["editor.acceptSuggestionOnEnter"] = "smart"
+        | .["editor.tabCompletion"] = "onlySnippets"
+        # Session management
+        | .["files.hotExit"] = "onExitAndWindowClose"
+        | .["window.restoreWindows"] = "all"
+        | .["workbench.editor.restoreViewState"] = true
+        # Security and strict rules
+        | .["security.workspace.trust.enabled"] = true
+        | .["security.untrustedFiles"] = "newWindow"
+        | .["workbench.enableExperiments"] = false
+        | .["workbench.settings.enableNaturalLanguageSearch"] = false
+        # Updates and extensions
+        | .["update.mode"] = "manual"
+        | .["extensions.autoUpdate"] = false
+        | .["extensions.autoCheckUpdates"] = true
+        # macOS M3 optimizations (remove deprecated search settings)
+        | .["editor.largeFileOptimizations"] = true
+        | .["files.watcherExclude"] = {"**/.git/objects/**": true, "**/.DS_Store": true}
+        | del(.["search.useRipgrep"])
+        | del(.["search.usePCRE2"])
+    ' "$settings_file" > "$tmp"; then
+        # Restore backup on failure
+        mv "$temp_backup" "$settings_file"
+        rm -f "$tmp"
+        error_exit "Failed to apply settings transformation"
+    fi
+    
+    # Preserve permissions and move final file
+    if command -v stat >/dev/null 2>&1; then
+        uid="$(stat -f %u "$settings_file" 2>/dev/null || stat -c %u "$settings_file")"
+        gid="$(stat -f %g "$settings_file" 2>/dev/null || stat -c %g "$settings_file")"
+        mode="$(stat -f %Lp "$settings_file" 2>/dev/null || stat -c %a "$settings_file")"
+
+        if [[ -n $uid && -n $gid ]]; then
+            chown "$uid:$gid" "$tmp" || true
+        fi
+        if [[ -n $mode ]]; then
+            chmod "$mode" "$tmp" || true
+        fi
+    fi
+    
+    mv "$tmp" "$settings_file"
+    rm -f "$temp_backup"
 }
 
 log "Starting Cursor application settings configuration"
@@ -35,15 +125,16 @@ if [ ! -f "$SETTINGS_FILE" ]; then
 fi
 log "Using settings file: $SETTINGS_FILE"
 
-command -v jq >/dev/null 2>&1 || { log "ERROR: jq not installed"; exit 1; }
-jq empty "$SETTINGS_FILE" >/dev/null 2>&1 || { log "ERROR: settings.json is invalid JSON"; exit 1; }
+command -v jq >/dev/null 2>&1 || error_exit "jq not installed"
+jq empty "$SETTINGS_FILE" >/dev/null 2>&1 || error_exit "settings.json is invalid JSON"
+check_no_fake_code "$SETTINGS_FILE"
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Desired settings → "key expectedValue"
+# Desired settings → "key expectedValue" (final clean schema)
 declare -a CHECK_SETTINGS=(
-    # Telemetry and crash reporting
+    # Modern telemetry and crash reporting
     'telemetry.enableTelemetry false'
-    'telemetry.enableCrashReporter false'
+    'crashReporting.enabled "off"'
     'telemetry.telemetryLevel "off"'
     # Safe autocompletion
     'editor.acceptSuggestionOnCommitCharacter false'
@@ -62,6 +153,8 @@ declare -a CHECK_SETTINGS=(
     'update.mode "manual"'
     'extensions.autoUpdate false'
     'extensions.autoCheckUpdates true'
+    # macOS M3 optimizations (no deprecated search settings)
+    'editor.largeFileOptimizations true'
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -75,6 +168,7 @@ for setting in "${CHECK_SETTINGS[@]}"; do
         if [[ $expected_val == \"* || $expected_val == "true" || $expected_val == "false" || $expected_val =~ ^[0-9]+$ ]]; then
             printf '.["%s"] == %s' "$key" "$expected_val"
         else
+            # shellcheck disable=SC2016
             printf '.["%s"] == $expected' "$key"
         fi
     )"
@@ -93,46 +187,7 @@ if [[ $need_update == "yes" ]]; then
     cp -p "$SETTINGS_FILE" "$backup"
     log "Backup created: $backup"
 
-    tmp="$(dirname "$SETTINGS_FILE")/settings.tmp.$$"
-    jq '
-        # Telemetry settings
-        .["telemetry.enableTelemetry"] = false
-        | .["telemetry.enableCrashReporter"] = false
-        | .["telemetry.telemetryLevel"] = "off"
-        # Safe autocompletion
-        | .["editor.acceptSuggestionOnCommitCharacter"] = false
-        | .["editor.acceptSuggestionOnEnter"] = "smart"
-        | .["editor.tabCompletion"] = "onlySnippets"
-        # Session management
-        | .["files.hotExit"] = "onExitAndWindowClose"
-        | .["window.restoreWindows"] = "all"
-        | .["workbench.editor.restoreViewState"] = true
-        # Security and strict rules
-        | .["security.workspace.trust.enabled"] = true
-        | .["security.untrustedFiles"] = "newWindow"
-        | .["workbench.enableExperiments"] = false
-        | .["workbench.settings.enableNaturalLanguageSearch"] = false
-        # Updates and extensions
-        | .["update.mode"] = "manual"
-        | .["extensions.autoUpdate"] = false
-        | .["extensions.autoCheckUpdates"] = true
-    ' "$SETTINGS_FILE" > "$tmp"
-
-    # Preserve original ownership & permissions
-    if command -v stat >/dev/null 2>&1; then
-        uid="$(stat -f %u "$SETTINGS_FILE" 2>/dev/null || stat -c %u "$SETTINGS_FILE")"
-        gid="$(stat -f %g "$SETTINGS_FILE" 2>/dev/null || stat -c %g "$SETTINGS_FILE")"
-        mode="$(stat -f %Lp "$SETTINGS_FILE" 2>/dev/null || stat -c %a "$SETTINGS_FILE")"
-
-        if [[ -n $uid && -n $gid ]]; then
-            chown "$uid:$gid" "$tmp" || true
-        fi
-        if [[ -n $mode ]]; then
-            chmod "$mode" "$tmp" || true
-        fi
-    fi
-
-    mv -f "$tmp" "$SETTINGS_FILE"
+    apply_settings_with_backup "$SETTINGS_FILE"
     log "Settings updated successfully."
 else
     log "All targeted settings already configured – no changes needed."
@@ -150,6 +205,7 @@ for setting in "${CHECK_SETTINGS[@]}"; do
         if [[ $expected_val == \"* || $expected_val == "true" || $expected_val == "false" || $expected_val =~ ^[0-9]+$ ]]; then
             printf '.["%s"] == %s' "$key" "$expected_val"
         else
+            # shellcheck disable=SC2016
             printf '.["%s"] == $expected' "$key"
         fi
     )"
@@ -161,8 +217,9 @@ done
 
 percent=$(( correct * 100 / total ))
 if (( correct * 100 < 80 * total )); then
-    log "ERROR: verification failed – $correct of $total settings applied (~${percent} %)."
-    exit 1
+    error_exit "verification failed – $correct of $total settings applied (~${percent} %)"
 else
     log "Verification passed – $correct/$total settings applied (~${percent} %)."
+    check_no_fake_code "$SETTINGS_FILE"
+    log "Application settings hardening completed successfully"
 fi
