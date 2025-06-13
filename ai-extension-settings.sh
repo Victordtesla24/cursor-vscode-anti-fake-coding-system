@@ -327,6 +327,7 @@ main() {
     if check_extension_idempotency "$settings_file"; then
         verify_extension_settings "$settings_file" "$extensions"
         log "No changes needed (already hardened)"
+        log "AI extension hardening completed successfully"
         return 0
     fi
 

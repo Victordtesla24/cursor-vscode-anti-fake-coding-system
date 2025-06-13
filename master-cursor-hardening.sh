@@ -41,10 +41,10 @@ log() {
     local color="$3"
     local ts
     ts=$(date '+%Y-%m-%d %H:%M:%S')
-    
+
     # Console output with color
     echo -e "${color}[$ts] [$MASTER_SCRIPT_NAME] [$level] $message${NC}"
-    
+
     # Log file output without color codes
     echo "[$ts] [$MASTER_SCRIPT_NAME] [$level] $message" | sudo tee -a "$MASTER_LOG_FILE" >/dev/null 2>&1 || true
 }
@@ -60,7 +60,7 @@ log_debug() { log "DEBUG" "$1" "$PURPLE"; }
 error_exit() {
     local message="$1"
     local exit_code="${2:-1}"
-    
+
     log_error "$message"
     log_error "Production system failure - requires manual intervention"
     exit "$exit_code"
@@ -83,7 +83,7 @@ display_header() {
 # Comprehensive system validation
 validate_system_requirements() {
     log_info "🔍 Performing comprehensive system validation..."
-    
+
     # Check macOS version
     local macos_version
     macos_version=$(sw_vers -productVersion)
@@ -91,7 +91,7 @@ validate_system_requirements() {
         error_exit "macOS $REQUIRED_MACOS_VERSION or later required. Found: $macos_version"
     fi
     log_success "✅ macOS version check passed: $macos_version"
-    
+
     # Check Apple Silicon architecture
     local arch
     arch=$(uname -m)
@@ -101,7 +101,7 @@ validate_system_requirements() {
     else
         log_success "✅ Apple Silicon architecture confirmed: $arch"
     fi
-    
+
     # Check available disk space
     local available_space_gb
     available_space_gb=$(df -g . | awk 'NR==2 {print $4}')
@@ -109,7 +109,7 @@ validate_system_requirements() {
         error_exit "Insufficient disk space. Required: ${REQUIRED_FREE_SPACE_GB}GB, Available: ${available_space_gb}GB"
     fi
     log_success "✅ Disk space check passed: ${available_space_gb}GB available"
-    
+
     # Check admin privileges
     if ! sudo -n true 2>/dev/null; then
         log_warning "⚠️  Admin privileges required for system-level configurations"
@@ -117,7 +117,7 @@ validate_system_requirements() {
     else
         log_success "✅ Admin privileges confirmed"
     fi
-    
+
     # Validate required dependencies
     local deps=("jq" "curl" "git")
     for dep in "${deps[@]}"; do
@@ -126,16 +126,16 @@ validate_system_requirements() {
         fi
         log_success "✅ Dependency check passed: $dep"
     done
-    
+
     # Check Cursor/VSCode installation
     if ! command -v code >/dev/null 2>&1; then
         error_exit "Cursor/VSCode CLI not found. Ensure 'code' command is available in PATH"
     fi
-    
+
     local code_version
     code_version=$(code --version | head -n1)
     log_success "✅ Cursor/VSCode CLI found: $code_version"
-    
+
     # Validate script files exist
     local required_scripts=("policy-file-generator.sh" "cursor-application-settings.sh" "ai-extension-settings.sh" "cursor-optimization-policies.sh")
     for script in "${required_scripts[@]}"; do
@@ -148,7 +148,7 @@ validate_system_requirements() {
         fi
         log_success "✅ Script validation passed: $script"
     done
-    
+
     log_success "🎯 System validation completed successfully"
 }
 
@@ -170,45 +170,45 @@ execute_script() {
     local script_name="$1"
     local description="$2"
     local timeout_seconds="${3:-300}"
-    
+
     log_info "🚀 Executing: $script_name - $description"
     log_info "   Timeout: ${timeout_seconds}s | Max retries: 2"
-    
+
     local attempt=1
     local max_attempts=2
-    
+
     while [[ $attempt -le $max_attempts ]]; do
         log_info "   Attempt $attempt/$max_attempts"
-        
+
         # Execute script with timeout and capture output
         local start_time output exit_code duration
         start_time=$(date +%s)
-        
+
         if timeout "$timeout_seconds" bash "$script_name" > "/tmp/${script_name}.log" 2>&1; then
             exit_code=0
         else
             exit_code=$?
         fi
-        
+
         duration=$(($(date +%s) - start_time))
         output=$(cat "/tmp/${script_name}.log" 2>/dev/null || echo "No output captured")
-        
+
         if [[ $exit_code -eq 0 ]]; then
             log_success "✅ $script_name completed successfully (${duration}s)"
             EXECUTED_SCRIPTS+=("$script_name")
-            
+
             # Validate script-specific success markers
             validate_script_execution "$script_name" "$output"
             return 0
         else
             log_error "❌ $script_name failed (attempt $attempt/$max_attempts, exit code: $exit_code, ${duration}s)"
             log_debug "   Output: $output"
-            
+
             if [[ $attempt -eq $max_attempts ]]; then
                 FAILED_SCRIPTS+=("$script_name")
                 return $exit_code
             fi
-            
+
             ((attempt++))
             log_info "   Retrying in 5 seconds..."
             sleep 5
@@ -220,7 +220,7 @@ execute_script() {
 validate_script_execution() {
     local script_name="$1"
     local output="$2"
-    
+
     case "$script_name" in
         "policy-file-generator.sh")
             if echo "$output" | grep -q "Policy file generation script completed successfully"; then
@@ -256,13 +256,13 @@ validate_script_execution() {
 # Comprehensive post-execution validation
 perform_comprehensive_validation() {
     log_info "🔍 Performing comprehensive post-execution validation..."
-    
+
     local validation_errors=0
-    
+
     # Validate settings.json structure and content
     log_info "   Validating Cursor settings.json..."
     local settings_file="$HOME/Library/Application Support/Cursor/User/settings.json"
-    
+
     if [[ ! -f "$settings_file" ]]; then
         log_error "   ❌ Settings file not found: $settings_file"
         ((validation_errors++))
@@ -271,7 +271,7 @@ perform_comprehensive_validation() {
         ((validation_errors++))
     else
         log_success "   ✅ Settings file structure valid"
-        
+
         # Validate specific critical settings
         local critical_settings=(
             "telemetry.enableTelemetry:false"
@@ -279,18 +279,18 @@ perform_comprehensive_validation() {
             "security.workspace.trust.enabled:true"
             "cline.conservativeMode:true"
         )
-        
+
         for setting in "${critical_settings[@]}"; do
             local key="${setting%:*}"
             local expected="${setting#*:}"
             local actual
-            
+
             if [[ "$expected" == "true" || "$expected" == "false" ]]; then
-                actual=$(jq -r ".[\"$key\"] // \"missing\"" "$settings_file")
+                actual=$(jq -r ".[\"$key\"]" "$settings_file" 2>/dev/null || echo "missing")
             else
-                actual=$(jq -r ".[\"$key\"] // \"missing\"" "$settings_file")
+                actual=$(jq -r ".[\"$key\"]" "$settings_file" 2>/dev/null || echo "missing")
             fi
-            
+
             if [[ "$actual" == "$expected" ]]; then
                 log_success "   ✅ $key = $expected"
             else
@@ -299,30 +299,29 @@ perform_comprehensive_validation() {
             fi
         done
     fi
-    
+
     # Validate policy files existence and content
     log_info "   Validating policy files..."
     local cursor_dir="$HOME/Library/Application Support/Cursor"
     local current_dir="$PWD"
-    
+
     # Check global policy files
     local global_policy_files=(
-        "$cursor_dir/rules/001-coding-protocols.mdc"
-        "$cursor_dir/rules/002-directory-management.mdc"
-        "$cursor_dir/rules/003-error-fixing.mdc"
-        "$cursor_dir/rules/004-token-optimization.mdc"
-        "$cursor_dir/.cursorrules"
+        "$cursor_dir/rules/001-directory-management-protocols.mdc"
+        "$cursor_dir/rules/002-error-fixing-protocols.mdc"
+        "$cursor_dir/rules/003-backend_structure_document.mdc"
+        "$cursor_dir/rules/004-tech_stack_document.mdc"
     )
-    
+
     # Check project-local policy files
     local project_policy_files=(
-        "$current_dir/001-coding-protocols.mdc"
-        "$current_dir/002-directory-management.mdc"
-        "$current_dir/003-error-fixing.mdc"
-        "$current_dir/004-token-optimization.mdc"
+        "$current_dir/.cursor/rules/001-directory-management-protocols.mdc"
+        "$current_dir/.cursor/rules/002-error-fixing-protocols.mdc"
+        "$current_dir/.cursor/rules/003-backend_structure_document.mdc"
+        "$current_dir/.cursor/rules/004-tech_stack_document.mdc"
         "$current_dir/.cursorrules"
     )
-    
+
     log_info "   🌍 Global policy files in: $cursor_dir"
     for file in "${global_policy_files[@]}"; do
         if [[ -f "$file" && -s "$file" ]]; then
@@ -332,7 +331,7 @@ perform_comprehensive_validation() {
             ((validation_errors++))
         fi
     done
-    
+
     log_info "   📁 Project policy files in: $current_dir"
     for file in "${project_policy_files[@]}"; do
         if [[ -f "$file" && -s "$file" ]]; then
@@ -342,7 +341,7 @@ perform_comprehensive_validation() {
             ((validation_errors++))
         fi
     done
-    
+
     # Validate optimization directory structure
     log_info "   Validating optimization structure..."
     local opt_dirs=(
@@ -350,7 +349,7 @@ perform_comprehensive_validation() {
         "$cursor_dir/optimization/validation"
         "$cursor_dir/optimization/file-management"
     )
-    
+
     for dir in "${opt_dirs[@]}"; do
         if [[ -d "$dir" ]]; then
             log_success "   ✅ Optimization directory exists: $(basename "$dir")"
@@ -359,7 +358,7 @@ perform_comprehensive_validation() {
             ((validation_errors++))
         fi
     done
-    
+
     # Test Cursor/VSCode functionality
     log_info "   Testing Cursor/VSCode integration..."
     if code --list-extensions >/dev/null 2>&1; then
@@ -370,7 +369,7 @@ perform_comprehensive_validation() {
         log_error "   ❌ Cursor CLI test failed"
         ((validation_errors++))
     fi
-    
+
     # Final validation result
     if [[ $validation_errors -eq 0 ]]; then
         log_success "🎯 Comprehensive validation PASSED (0 errors)"
@@ -384,10 +383,10 @@ perform_comprehensive_validation() {
 # Generate detailed execution report
 generate_execution_report() {
     log_info "📊 Generating detailed execution report..."
-    
+
     local report_file
     report_file="cursor-hardening-report-$(date +%Y%m%d_%H%M%S).txt"
-    
+
     cat > "$report_file" << EOF
 ═══════════════════════════════════════════════════════════════════════════════
                    CURSOR AI HARDENING EXECUTION REPORT
@@ -418,7 +417,7 @@ fi)
 
 Settings Applied:
   🔒 Telemetry completely disabled
-  🔐 Crash reporting disabled  
+  🔐 Crash reporting disabled
   🛡️  Workspace trust enabled
   🚫 Auto-updates disabled (manual control)
   🎯 AI extensions hardened with anti-hallucination controls
@@ -474,40 +473,40 @@ EOF
 confirm_execution() {
     echo -e "\n${YELLOW}⚠️  ENTERPRISE CURSOR AI HARDENING SUITE${NC}"
     echo -e "${YELLOW}   This script will make comprehensive changes to your system:${NC}\n"
-    
+
     echo -e "${CYAN}🔧 MODIFICATIONS TO BE APPLIED:${NC}"
     echo -e "   • Cursor/VSCode application settings (telemetry, security, performance)"
     echo -e "   • AI extension configurations (anti-hallucination controls)"
     echo -e "   • Policy files creation (.cursorrules, .mdc protocols)"
     echo -e "   • Optimization directory structure and monitoring scripts"
     echo -e "   • Apple M3 performance optimizations"
-    
+
     echo -e "\n${CYAN}🛡️  SECURITY ENHANCEMENTS:${NC}"
     echo -e "   • Complete telemetry disabling"
     echo -e "   • Workspace trust enforcement"
     echo -e "   • Extension auto-update control"
     echo -e "   • Zero fake code policy enforcement"
-    
+
     echo -e "\n${CYAN}📋 BACKUP & SAFETY:${NC}"
     echo -e "   • Comprehensive system backup before changes"
     echo -e "   • Automatic rollback on any failure"
     echo -e "   • Detailed execution logging and reporting"
-    
+
     echo -e "\n${RED}⚠️  SYSTEM REQUIREMENTS:${NC}"
     echo -e "   • macOS 14+ (Apple Silicon recommended)"
     echo -e "   • Admin privileges for system-level changes"
     echo -e "   • ${REQUIRED_FREE_SPACE_GB}GB free disk space"
     echo -e "   • Cursor/VSCode with CLI access"
-    
+
     echo -e "\n${WHITE}Expected execution time: 3-5 minutes${NC}"
     echo -e "${WHITE}All changes are logged and reversible${NC}\n"
-    
+
     read -rp "Do you want to proceed with the hardening suite? (y/N): " confirm
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
         log_info "Execution cancelled by user"
         exit 0
     fi
-    
+
     log_success "User confirmed execution - proceeding with hardening suite"
 }
 
@@ -517,19 +516,19 @@ main() {
     sudo mkdir -p "$(dirname "$MASTER_LOG_FILE")" 2>/dev/null || true
     sudo touch "$MASTER_LOG_FILE" 2>/dev/null || true
     sudo chmod 644 "$MASTER_LOG_FILE" 2>/dev/null || true
-    
+
     display_header
-    
+
     log_info "🚀 Starting Cursor AI Hardening Suite v$SCRIPT_VERSION"
     log_info "Target: Enterprise-grade security and anti-hallucination controls"
-    
+
     # Pre-execution phases
     validate_system_requirements
     confirm_execution
     create_system_backup
-    
+
     log_info "🎯 Beginning orchestrated script execution..."
-    
+
     # Script execution in optimal order
     local scripts=(
         "policy-file-generator.sh:Policy File Generation (Foundation)"
@@ -537,52 +536,52 @@ main() {
         "ai-extension-settings.sh:AI Extension Configuration"
         "cursor-optimization-policies.sh:Optimization Policies Implementation"
     )
-    
+
     local total_scripts=${#scripts[@]}
     local current_script=1
-    
+
     for script_info in "${scripts[@]}"; do
         local script_name="${script_info%:*}"
         local description="${script_info#*:}"
-        
+
         echo -e "\n${BLUE}╔══════════════════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${BLUE}║${NC} ${WHITE}Step $current_script/$total_scripts: $description${NC} ${BLUE}║${NC}"
         echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════════════════╝${NC}\n"
-        
+
         if ! execute_script "$script_name" "$description" 300; then
             error_exit "Critical failure in $script_name - aborting execution"
         fi
-        
+
         ((current_script++))
-        
+
         # Inter-script validation pause
         if [[ $current_script -le $total_scripts ]]; then
             log_info "⏸️  Inter-script validation pause (2 seconds)..."
             sleep 2
         fi
     done
-    
+
     log_success "🎯 All scripts executed successfully"
-    
+
     # Post-execution validation and reporting
     echo -e "\n${BLUE}╔══════════════════════════════════════════════════════════════════════════════╗${NC}"
     echo -e "${BLUE}║${NC} ${WHITE}Final Validation & Reporting${NC} ${BLUE}║${NC}"
     echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════════════════╝${NC}\n"
-    
+
     if perform_comprehensive_validation; then
         log_success "🎉 CURSOR AI HARDENING SUITE COMPLETED SUCCESSFULLY!"
         generate_execution_report
-        
+
         echo -e "\n${GREEN}╔══════════════════════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${GREEN}║${NC} ${WHITE}🎉 SUCCESS: Enterprise-grade hardening completed successfully! 🎉${NC} ${GREEN}║${NC}"
         echo -e "${GREEN}╚══════════════════════════════════════════════════════════════════════════════╝${NC}"
-        
+
         echo -e "\n${CYAN}🔄 RECOMMENDED NEXT STEPS:${NC}"
         echo -e "   1. Restart Cursor/VSCode to activate all settings"
         echo -e "   2. Review the generated execution report"
         echo -e "   3. Test AI extension functionality with new anti-hallucination controls"
         echo -e "   4. Monitor system performance with M3 optimizations"
-        
+
         exit 0
     else
         error_exit "Post-execution validation failed - see detailed logs for troubleshooting" 2
