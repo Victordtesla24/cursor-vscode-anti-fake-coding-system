@@ -48,14 +48,11 @@ check_no_fake_code() {
     fi
 }
 
-# Detect Cursor directory with correct macOS default path
+# Detect Cursor directory with correct macOS default path (no logging to prevent directory pollution)
 detect_cursor_directory() {
     local cursor_dir="$HOME/Library/Application Support/Cursor"
     if [[ ! -d "$cursor_dir" ]]; then
         cursor_dir="$HOME/Library/Application Support/Code"
-        script_log "Cursor directory not found, using VSCode directory: $cursor_dir"
-    else
-        script_log "Using Cursor directory: $cursor_dir"
     fi
     echo "$cursor_dir"
 }

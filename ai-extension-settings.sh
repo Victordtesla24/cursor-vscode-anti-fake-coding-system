@@ -14,9 +14,11 @@ readonly SCRIPT_NAME="ai-extension-settings"
 readonly LOG_FILE="/var/log/cursor-setup.log"
 
 log() {
-    TS=$(date '+%Y-%m-%d %H:%M:%S')
-    # Append to log; on failure (e.g. permission), also echo to stdout
-    echo "[$TS] [$SCRIPT_NAME] $*" | tee -a "$LOG_FILE" || echo "[$TS] [$SCRIPT_NAME] $*"
+    local ts msg
+    ts=$(date '+%Y-%m-%d %H:%M:%S')
+    msg="$*"
+    # Improved logging with better fallback handling
+    echo "[$ts] [$SCRIPT_NAME] $msg" | tee -a "$LOG_FILE" 2>/dev/null || echo "[$ts] [$SCRIPT_NAME] $msg"
 }
 
 error_exit() {
@@ -39,20 +41,17 @@ check_no_fake_code() {
 # Apply settings atomically - ZERO BACKUP STRATEGY
 apply_atomic() {
     local settings_file="$1"
-    
+
     # Execute the configuration function directly - production grade
     shift
     "$@" || error_exit "Configuration failed - system requires intervention"
 }
 
-# Detect Cursor settings directory (project-agnostic)
+# Detect Cursor settings directory (project-agnostic) - no logging to prevent directory pollution
 detect_cursor_settings() {
     local cursor_dir="$HOME/Library/Application Support/Cursor"
     if [ ! -d "$cursor_dir" ]; then
         cursor_dir="$HOME/Library/Application Support/Code"
-        log "Cursor directory not found, using VSCode directory: $cursor_dir"
-    else
-        log "Using Cursor directory: $cursor_dir"
     fi
     echo "$cursor_dir"
 }
@@ -61,7 +60,7 @@ detect_cursor_settings() {
 # Check if an existing hardening marker is present (idempotency)
 check_extension_idempotency() {
     local settings="$1"
-    if [ -f "$settings" ] && grep -q '"cline.conservativeMode": true' "$settings"; then
+    if [ -f "$settings" ] && grep -q '"cline.conservativeMode": true' "$settings" && grep -q '"cline.strictModeEnabled": true' "$settings" && grep -q '"cline.maxFileSize": 300' "$settings"; then
         return 0
     fi
     return 1
@@ -82,7 +81,7 @@ configure_cline_settings() {
     local tmp
     tmp=$(mktemp)
     [ -f "$settings" ] || echo '{}' > "$settings"
-    
+
     local cline_settings='{
         "cline.enableAutoApproval": false,
         "cline.enableValidation": true,
@@ -126,7 +125,7 @@ configure_cline_settings() {
             "requireExplicitApproval": true
         }
     }'
-    
+
     jq -s '.[0] * .[1]' "$settings" <(echo "$cline_settings") > "$tmp" || error_exit "Failed to merge Cline settings"
     mv "$tmp" "$settings"
     log "Cline (Claude) extension settings applied with enhanced anti-hallucination controls"
@@ -138,7 +137,7 @@ configure_copilot_settings() {
     local tmp
     tmp=$(mktemp)
     [ -f "$settings" ] || echo '{}' > "$settings"
-    
+
     local copilot_settings='{
         "github.copilot.enable": {
             "*": true,
@@ -157,7 +156,7 @@ configure_copilot_settings() {
         "github.copilot.conversation.localeOverride": "en",
         "github.copilot.preferences.includeCompletionsTelemetry": false
     }'
-    
+
     jq -s '.[0] * .[1]' "$settings" <(echo "$copilot_settings") > "$tmp" || error_exit "Failed to merge Copilot settings"
     mv "$tmp" "$settings"
     log "GitHub Copilot settings applied with conservative controls"
@@ -169,7 +168,7 @@ configure_tabnine_settings() {
     local tmp
     tmp=$(mktemp)
     [ -f "$settings" ] || echo '{}' > "$settings"
-    
+
     local tabnine_settings='{
         "tabnine.experimentalAutoImports": false,
         "tabnine.receiveBetaChannelUpdates": false,
@@ -189,7 +188,7 @@ configure_tabnine_settings() {
             ".*api.?key.*"
         ]
     }'
-    
+
     jq -s '.[0] * .[1]' "$settings" <(echo "$tabnine_settings") > "$tmp" || error_exit "Failed to merge TabNine settings"
     mv "$tmp" "$settings"
     log "TabNine settings applied with enhanced security controls"
@@ -201,7 +200,7 @@ configure_continue_settings() {
     local tmp
     tmp=$(mktemp)
     [ -f "$settings" ] || echo '{}' > "$settings"
-    
+
     local continue_settings='{
         "continue.enableTabAutocomplete": false,
         "continue.telemetryEnabled": false,
@@ -210,7 +209,7 @@ configure_continue_settings() {
         "continue.enableCodeReview": true,
         "continue.strictMode": true
     }'
-    
+
     jq -s '.[0] * .[1]' "$settings" <(echo "$continue_settings") > "$tmp" || error_exit "Failed to merge Continue settings"
     mv "$tmp" "$settings"
     log "Continue extension settings applied with strict controls"
@@ -226,7 +225,7 @@ verify_extension_settings() {
     # Cline checks with enhanced verification
     if echo "$extensions" | grep -q "saoudrizwan.claude-dev"; then
         log "Verifying Cline AI extension settings..."
-        
+
         local cline_checks=(
             '"cline.conservativeMode": true'
             '"cline.enableValidation": true'
@@ -236,7 +235,7 @@ verify_extension_settings() {
             '"cline.strictModeEnabled": true'
             '"cline.maxFileSize": 300'
         )
-        
+
         for check in "${cline_checks[@]}"; do
             checks=$((checks+1))
             if grep -q "$check" "$settings"; then
@@ -251,7 +250,7 @@ verify_extension_settings() {
     # Copilot checks
     if echo "$extensions" | grep -q "GitHub.copilot"; then
         log "Verifying GitHub Copilot settings..."
-        
+
         checks=$((checks+2))
         grep -q '"github.copilot.editor.enableAutoCompletions": true' "$settings" && hits=$((hits+1))
         grep -q '"github.copilot.editor.enableCodeActions": false' "$settings" && hits=$((hits+1))
@@ -260,7 +259,7 @@ verify_extension_settings() {
     # TabNine checks
     if echo "$extensions" | grep -q "TabNine.tabnine-vscode"; then
         log "Verifying TabNine settings..."
-        
+
         checks=$((checks+1))
         grep -q '"tabnine.experimentalAutoImports": false' "$settings" && hits=$((hits+1))
     fi
@@ -268,7 +267,7 @@ verify_extension_settings() {
     # Continue checks
     if echo "$extensions" | grep -q "Continue.continue"; then
         log "Verifying Continue extension settings..."
-        
+
         checks=$((checks+2))
         grep -q '"continue.telemetryEnabled": false' "$settings" && hits=$((hits+1))
         grep -q '"continue.strictMode": true' "$settings" && hits=$((hits+1))
@@ -292,7 +291,7 @@ verify_extension_settings() {
 # Main routine with project-agnostic approach
 main() {
     log "Starting AI extension settings hardening (project-agnostic)"
-    
+
     # Ensure `code` CLI is available
     if ! command -v code >/dev/null 2>&1; then
         error_exit "'code' CLI not found. Install VSCode/Cursor CLI."
@@ -309,7 +308,7 @@ main() {
     if ! command -v jq >/dev/null 2>&1; then
         error_exit "jq is required but not installed."
     fi
-    
+
     # Verify JSON and check for fake code
     # Temporarily disabled due to context issue - JSON is valid when tested manually
     # if ! jq empty "$settings_file" >/dev/null 2>&1; then
@@ -336,17 +335,17 @@ main() {
         log "Configuring Cline AI extension..."
         apply_atomic "$settings_file" configure_cline_settings "$settings_file"
     fi
-    
+
     if echo "$extensions" | grep -q "GitHub.copilot"; then
         log "Configuring GitHub Copilot extension..."
         apply_atomic "$settings_file" configure_copilot_settings "$settings_file"
     fi
-    
+
     if echo "$extensions" | grep -q "TabNine.tabnine-vscode"; then
         log "Configuring TabNine extension..."
         apply_atomic "$settings_file" configure_tabnine_settings "$settings_file"
     fi
-    
+
     if echo "$extensions" | grep -q "Continue.continue"; then
         log "Configuring Continue extension..."
         apply_atomic "$settings_file" configure_continue_settings "$settings_file"

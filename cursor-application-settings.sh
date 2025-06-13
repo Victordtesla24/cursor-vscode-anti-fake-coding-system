@@ -14,12 +14,18 @@ readonly LOG_FILE="/var/log/cursor-setup.log"
 readonly SCRIPT_TAG="[application-settings]"
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Utility: timestamped logger
+# Utility: timestamped logger - fixed to prevent directory creation bug
 log() {
     local ts msg
     ts="$(date '+%Y-%m-%d %H:%M:%S')"
     msg="$1"
-    echo "[$ts] $SCRIPT_TAG $msg" | tee -a "$LOG_FILE" || echo "[$ts] $SCRIPT_TAG $msg"
+    # Safer logging with error handling to prevent directory creation bug
+    if echo "[$ts] $SCRIPT_TAG $msg" | sudo tee -a "$LOG_FILE" >/dev/null 2>&1; then
+        echo "[$ts] $SCRIPT_TAG $msg"
+    else
+        # Fallback if log file write fails - output to console only
+        echo "[$ts] $SCRIPT_TAG $msg"
+    fi
 }
 
 # Error handler with exit
@@ -43,14 +49,11 @@ check_no_fake_code() {
     fi
 }
 
-# Detect Cursor directory (project-agnostic)
+# Detect Cursor directory (project-agnostic) - no logging to prevent directory pollution
 detect_cursor_directory() {
     local cursor_dir="$HOME/Library/Application Support/Cursor"
     if [ ! -d "$cursor_dir" ]; then
         cursor_dir="$HOME/Library/Application Support/Code"
-        log "Cursor directory not found, using VSCode directory: $cursor_dir"
-    else
-        log "Using Cursor directory: $cursor_dir"
     fi
     echo "$cursor_dir"
 }
