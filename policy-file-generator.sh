@@ -199,275 +199,98 @@ create_directory_management_protocols_sudo() {
     cat > "$mdc_file" << 'EOF'
 ## 001-directory-management-protocols
 
-###  Directory Management Protocol v2.0
+---
+description: Directory management protocols for code organization
+globs: ["**/*"]
+alwaysApply: true
+---
 
-**Objective:** To organize, consolidate, and maintain the project's directory structure according to established conventions, ensuring code clarity, eliminating redundancy, and preserving functionality while leveraging Cursor AI's advanced capabilities for optimal development workflows.
+### Directory Management Protocol
+
+**Objective:** To organize, consolidate, and maintain the project's directory structure according to established conventions, ensuring code clarity, eliminating redundancy, and preserving functionality.
 
 **Pre- and Post-Requisites:**
+*   Utilize version control (e.g., `git stash` or branch) before initiating significant changes.
+*   Follow all related protocols (`@my-error-fixing-protocols.mdc`) with absolute precision if errors arise during or after changes.
 
-* Utilize version control (e.g., `git stash` or branch) before initiating significant changes[14][15]
-* Follow all related protocols (`@002-error-fixing-protocols.mdc`) with absolute precision if errors arise during or after changes
-* Leverage Cursor's `.cursorrules` and `.cursorignore` configuration for optimal AI assistance[2][3][14]
+**Protocol Steps:**
 
-** Protocol Steps:**
+1.  **Determine & Adhere to Project Structure Conventions:**
+    *   Identify the established directory structure by checking:
+        *   Known framework conventions (e.g., Next.js, Django, Flask).
+        *   Project documentation (e.g., `README.md`, `CONTRIBUTING.md`).
+        *   Existing patterns in the majority of the codebase.
+        *   Configuration files (`.editorconfig`, linter configs).
+    *   If conventions are unclear or conflicting, ask the user for clarification.
+    *   Ensure all actions comply with VERCEL (or equivalent) deployment best practices regarding structure.
 
-#### 1. **Determine & Adhere to AI-Optimized Project Structure Conventions**
+2.  **Comprehensive File Scan & Inventory:**
+    *   Recursively scan the entire repository to build an inventory of files, modules, scripts, and configurations.
+    *   **Exclude:** `node_modules/`, `.venv/`, `.git/`, `.cursor/`, `.vscode/`, `build/`, `dist/`, `coverage/`, and any paths listed in `.gitignore`.
+3.  **Duplicate/Overlap Detection & Consolidation:**
+    *   **Strict Prohibition:** ***Never*** create a new file, script, or module if an existing one serves the same or a significantly overlapping purpose. This includes files with different names but similar functionality.
+    *   **Detection Heuristics:** Identify potential duplicates/overlaps by analyzing:
+        *   Exact file content matches.
+        *   High code similarity scores (conceptual).
+        *   Similar filenames or naming patterns.
+        *   Matching function/class signatures and primary exports.
+        *   Similar import dependencies.
+        *   Similar core logic or purpose described in comments/docs.
+    *   **Consolidation:** If duplicate or overlapping code/files are found:
+        *   Determine the **canonical version** (prefer established locations, more complete implementations, or ask the user if ambiguous).
+        *   Carefully **merge** necessary unique functionalities into the canonical version.
+        *   **Remove** the redundant file(s)/code block(s).
+    *   **User Approval:** ***Always*** solicit explicit user approval before creating any new file/module if there's a moderate-to-high confidence of functional overlap with existing code, or if ambiguity exists.
 
-* **Framework Detection & Optimization:** Identify the established directory structure by leveraging Cursor AI's project understanding capabilities[4][5]:
-  * Known framework conventions (e.g., Next.js, Django, Flask, React, Angular)
-  * Project documentation analysis using AI-powered content extraction
-  * Existing patterns detected through Cursor's codebase analysis
-  * Configuration files analysis with intelligent parsing
-  * Industry-standard patterns from Cursor's knowledge base
-* **AI-Assisted Convention Validation:** Use Cursor's context awareness to validate structure against best practices[16][17]
-* **Cursor-Specific Optimizations:** Ensure directory structure supports Cursor's indexing and context features[3][15]:
-  * Configure `.cursorignore` to exclude unnecessary files from AI analysis
-  * Optimize folder hierarchy for Cursor's navigation capabilities
-  * Implement nested rules structure using `.cursor/rules` directories[15]
-* **Deployment Compatibility:** Ensure all actions comply with VERCEL or equivalent deployment best practices regarding structure[12]
+4.  **Strict “No Unrequested Files” Policy:**
+    *   ***Do not*** create/generate any files, scripts, or code (even with different names) ***unless***:
+        a. The user has explicitly requested the creation of that specific new file/module.
+        b. The AI determines creation is *critically necessary* to fulfill the user's primary request *and* no existing file can be appropriately modified, *and* this necessity is confirmed with the user.
 
-#### 2. **AI- Comprehensive File Scan & Inventory**
+5.  **Correct Placement, Renaming & Reference Updates:**
+    *   Relocate or rename any misplaced file/directory to conform to the established project structure (identified in Step 1).
+    *   **Atomically Update References:** Immediately after moving or renaming, update *all* references across the codebase, including:
+        *   Code imports/exports (`import`, `require`, `export`, etc.).
+        *   Configuration files (`package.json`, `tsconfig.json`, `pyproject.toml`, CI/CD pipelines, etc.).
+        *   Build scripts.
+        *   Documentation (`.md` files referencing file paths).
+        *   Test files.
 
-* **Intelligent Project Analysis:** Recursively scan the entire repository using Cursor's  file understanding[12][4]:
-  * Build comprehensive inventory with AI-powered categorization
-  * Leverage Cursor's semantic analysis for file relationship mapping
-  * Utilize M3 chip's Neural Engine for accelerated content analysis[8][9]
-* **Smart Exclusion Patterns:** Automatically exclude with intelligent pattern recognition:
-  * `node_modules/`, `.venv/`, `.git/`, `.cursor/`, `.vscode/`
-  * `build/`, `dist/`, `coverage/`, and paths from `.gitignore`
-  * AI-detected temporary and cache directories
-* **Context-Aware Classification:** Use Cursor's understanding to classify files by:
-  * Functional purpose and architectural layer
-  * Technology stack and framework integration
-  * Development phase and lifecycle stage
+6.  **Import & Path Integrity Verification:**
+    *   After any move, rename, merge, or deletion:
+        *   Run linters and static analysis tools to catch path issues.
+        *   Attempt to build/compile the project.
+        *   If any errors (import, path, build, etc.) occur, immediately invoke the **Error Fixing Protocol** (`@my-error-fixing-protocols.mdc`), specifically using the **Recursive Import Error Fixing Algorithm** if applicable, aiming for resolution within two attempts per error.
 
-#### 3. **AI-Powered Duplicate/Overlap Detection & Consolidation**
+7.  **Clean-Up of Redundant Assets:**
+    *   Identify and remove orphaned, unused, or superseded files, code blocks, and configuration entries resulting from consolidation or refactoring.
+    *   **Verify Removal:** Double-check (e.g., using code search, `git grep`) that no residual references exist to the deleted items anywhere in the codebase or configuration.
 
-* **Strict AI-Assisted Prohibition:** Leverage Cursor's code analysis to prevent creation of redundant files[4][18]:
-  * Never create new files if existing ones serve the same purpose
-  * Use AI-powered similarity detection beyond simple naming patterns
-  * Implement intelligent functional overlap analysis
-* **Advanced Detection Heuristics with AI Enhancement:**
-  * **Semantic Analysis:** AI-powered content similarity detection
-  * **Functional Overlap Detection:** Code purpose and responsibility analysis
-  * **Pattern Recognition:** Advanced similarity scoring with machine learning
-  * **Dependency Analysis:** Import/export relationship mapping
-  * **Intent Recognition:** AI understanding of code purpose and goals
-* **Intelligent Consolidation Process:**
-  * **AI-Guided Canonical Selection:** Use Cursor's project understanding to identify the best version
-  * **Smart Merging:** AI-assisted functionality combination
-  * **Automated Cleanup:** Intelligent removal of redundant elements
-* ** User Approval with AI Insights:** Provide AI-generated recommendations with confidence scores and rationale[18]
+8.  **Preserve Functionality (Zero Regression):**
+    *   Ensure that all directory management actions do not alter existing functionality.
+    *   Run all relevant unit, integration, and end-to-end test suites. All existing tests must pass.
+    *   If test coverage is low for affected areas, perform manual sanity checks on core workflows or ask the user to verify.
 
-#### 4. ** "No Unrequested Files" Policy with AI Governance**
+9.  **Refactoring Large or Non-Cohesive Files:**
+    *   Identify files that are overly long (e.g., exceeding ~600 lines) OR exhibit low cohesion / multiple distinct responsibilities.
+    *   Propose a refactoring plan to the user to break the file into smaller, single-responsibility modules/components, adhering strictly to project structure and avoiding new duplication.
+    *   Proceed with refactoring only after user approval, applying steps 5-8 for each new/modified file.
 
-* **AI-Validated Creation Control:** Strictly prevent unauthorized file creation unless:
-  * Explicitly requested by user with clear specification
-  * AI determines critical necessity with high confidence
-  * User confirms AI recommendation after detailed explanation
-  * Cursor's context analysis supports the creation decision
-* **Intelligent Necessity Assessment:** Use AI to evaluate:
-  * Project architecture requirements
-  * Framework-specific needs
-  * Best practice compliance
-  * Long-term maintainability impact
-
-#### 5. **AI-Optimized Placement, Renaming & Reference Updates**
-
-* **Intelligent Structure Compliance:** Use Cursor's project understanding for optimal placement:
-  * AI-guided folder structure recommendations
-  * Framework-specific pattern recognition
-  * Best practice enforcement with confidence scoring
-* **Automated Reference Management with AI Assistance:**
-  * **Smart Import/Export Updates:** AI-powered dependency tracking
-  * **Configuration Intelligence:** Automated config file updates
-  * **Documentation Synchronization:** AI-assisted doc path corrections
-  * **Test Integration:** Intelligent test file reference updates
-  * **Build Process Integration:** Smart build script modifications
-
-#### 6. ** Import & Path Integrity Verification with AI**
-
-* **Proactive AI Monitoring:** Continuous validation during changes:
-  * Real-time linting with AI- error detection
-  * Intelligent build process monitoring
-  * AI-powered path resolution verification
-* **Smart Error Resolution:** Integration with  error-fixing protocols:
-  * Automated import error detection and correction
-  * AI-suggested path resolution strategies
-  * Intelligent fallback mechanisms
-* **Cursor-Specific Validation:** Leverage Cursor's analysis capabilities:
-  * Project-wide reference checking
-  * Context-aware error identification
-  * Smart suggestion integration
-
-#### 7. **AI-Guided Clean-Up of Redundant Assets**
-
-* **Intelligent Asset Management:** Use AI to identify cleanup opportunities:
-  * Orphaned file detection with confidence scoring
-  * Unused code identification through static analysis
-  * Configuration redundancy elimination
-  * Dead code removal with safety validation
-* **Smart Verification Process:** AI-powered safety checks:
-  * Comprehensive reference scanning with semantic understanding
-  * Dependency impact analysis
-  * Risk assessment for removal operations
-
-#### 8. **AI- Functionality Preservation (Zero Regression)**
-
-* **Comprehensive AI Monitoring:** Ensure no functionality loss:
-  * Automated test suite execution with intelligent analysis
-  * AI-powered regression detection
-  * Performance impact assessment
-  * User experience validation
-* **Intelligent Quality Assurance:**  validation with AI:
-  * Smart test coverage analysis
-  * AI-guided manual verification recommendations
-  * Risk-based testing prioritization
-
-#### 9. **AI-Assisted Large File Refactoring**
-
-* **Intelligent Complexity Detection:** Use AI to identify refactoring opportunities:
-  * Code complexity analysis with machine learning
-  * Cohesion scoring with AI-powered metrics
-  * Responsibility distribution assessment
-* **Smart Refactoring Recommendations:** AI-guided decomposition:
-  * Single-responsibility principle enforcement
-  * Optimal module boundary identification
-  * Framework-specific pattern application
-* **Collaborative Planning:** AI- user interaction:
-  * Detailed refactoring proposals with visual aids
-  * Risk assessment and mitigation strategies
-  * Implementation roadmap generation
-
-#### 10. ** Final Verification & AI-Powered Documentation**
-
-* **Comprehensive Quality Validation:** Multi-layered verification:
-  * Automated test suite execution with AI analysis
-  * Linting with intelligent error categorization
-  * Performance benchmark comparison
-  * Security scan integration
-* **Intelligent Documentation Generation:** AI-powered change tracking:
-  * Automated change summary generation
-  * Impact assessment documentation
-  * Architectural decision recording
-  * Version control integration with semantic commits
+10. **Final Verification & Documentation:**
+    *   Perform a final run of all relevant test suites and linters to confirm project health.
+    *   Record a summary of significant structural changes (moves, merges, deletions, major refactoring) in the Memory Bank or as part of the commit message(s) for traceability. Use clear, atomic commits in VCS for distinct changes.
 
 ---
 
-### ** Directory Management Algorithm with AI Integration**
+> **Critical Constraints (Mandatory Adherence)**
+>   - **No Functionality Change:** Functionality may not be added or removed beyond the specific goal of organization, consolidation, or approved refactoring. Focus is on structure and eliminating redundancy.
+>   - **Atomicity & Verification:** Apply changes in small, logical, atomic steps (e.g., move + update refs = one step). Verify integrity (linting, tests, build) immediately after each step. Use VCS checkpoints.
+>   - **User Confirmation:** **Always** confirm with the user before:
+>       *   Creating any new file/module suspected of overlapping with existing functionality.
+>       *   Deleting files (especially if not obvious duplicates).
+>       *   Undertaking major refactoring (Rule 9).
+>   - **Strict Adherence:** Follow all protocol steps precisely. Do not introduce unrelated changes.
 
-| Step | Action | AI Enhancement | Validation Requirements | Exit Condition |
-|------|--------|----------------|------------------------|----------------|
-| **1. AI- Structure Analysis** | Detect project conventions using Cursor's analysis capabilities | Leverage project-wide context understanding and framework detection | AI confidence scoring >85% for structure recognition | Structure conventions identified and validated |
-| **2. Intelligent Inventory Building** | Comprehensive scan with AI-powered categorization | Use semantic analysis and M3 Neural Engine acceleration | Complete file classification with relationship mapping | Project inventory complete with AI metadata |
-| **3. Smart Duplicate Detection** | AI-powered similarity analysis beyond basic patterns | Advanced semantic matching and functional overlap detection | Confidence scoring >90% for duplicate identification | Duplicates identified with consolidation plan |
-| **4. AI-Validated File Operations** | **Checkpoint (Git)**. Apply changes with AI governance | Real-time validation using Cursor's project understanding | All changes approved by AI safety analysis | Changes applied with zero conflicts |
-| **5. Intelligent Reference Updates** | Automated updates with AI-powered dependency tracking | Smart import resolution and configuration management | All references validated through static analysis | Reference integrity maintained |
-| **6.  Verification Loop** | Comprehensive testing with AI- error detection | Integration with error-fixing protocols and smart suggestions | Zero errors in linting, building, and testing | Quality validation passed |
-| **7. AI-Guided Cleanup** | Intelligent asset removal with safety validation | Risk assessment and impact analysis for each removal | Comprehensive safety checks with AI approval | Cleanup completed safely |
-| **8. Continuous Quality Monitoring** | Ongoing validation with AI-powered regression detection | Real-time monitoring and automated alerting | Performance benchmarks maintained or improved | Project health validated |
-
-#### ** Directory Management Flowchart with AI Integration**
-
-```ascii
-+--------------------------------------------+
-| START: AI- Structure Analysis      |
-| (Leverage Cursor's project understanding) |
-+--------------------------------------------+
-                    ↓
-+--------------------------------------------+
-| Intelligent Framework Detection            |
-| (Use AI for pattern recognition)           |
-+--------------------------------------------+
-                    ↓
-+--------------------------------------------+
-| Smart Project Inventory with M3            |
-| (Neural Engine accelerated analysis)       |
-+--------------------------------------------+
-                    ↓
-+--------------------------------------------+
-| AI-Powered Duplicate Detection             |
-| (Semantic similarity + functional overlap) |
-+--------------------------------------------+
-                    ↓
-+--------------------------------------------+
-| Consolidation Planning with AI             |
-| (Intelligent merge strategy generation)    |
-+--------------------------------------------+
-                    ↓
-+--------------------------------------------+
-| Git Checkpoint + AI Validation             |
-+--------------------------------------------+
-                    ↓
-+--------------------------------------------+
-| Smart File Operations with Safety Checks   |
-| (AI-governed creation and modification)    |
-+--------------------------------------------+
-                    ↓
-+--------------------------------------------+
-| Automated Reference Updates                |
-| (AI-powered dependency management)         |
-+--------------------------------------------+
-                    ↓
-+--------------------------------------------+
-|  Verification Loop                 |
-| (Integration with error-fixing protocols)  |
-+--------------------+-----------------------+
-                     ↓
-+--------------------+-----------------------+
-| AI Quality Assessment: All Tests Pass?    |
-+--------------------+-----------------------+
-         YES                    NO
-          ↓                     ↓
-+--------------------+  +------------------+
-| Intelligent        |  | Trigger  |
-| Cleanup Phase      |  | Error Resolution |
-+--------------------+  +------------------+
-          ↓                     ↓
-+--------------------+  +------------------+
-| Final AI           |  | Iterative Fix    |
-| Documentation      |  | with AI Guidance |
-+--------------------+  +------------------+
-          ↓                     ↓
-+--------------------+  +------------------+
-| Project Health     |  | Continue Until   |
-| Validation         |  | Resolution       |
-+--------------------+  +------------------+
-          ↓
-+--------------------------------------------+
-| END:  Directory Management Complete|
-+--------------------------------------------+
-```
-
----
-
-## ** Critical Constraints (Mandatory Adherence)**
-
-### **AI-Powered Quality Assurance**
-- **Intelligent Atomicity:** Each change validated through AI analysis for minimal impact
-- **Smart Targeting:** AI-guided changes focused on specific, necessary modifications
-- **Zero Placeholder Policy:** Complete AI-generated code with no temporary markers
-- **Automated Safety Nets:** Real-time monitoring with AI-powered rollback capabilities
-
-### **Cursor AI-Specific Optimizations**
-- **Context Leverage:** Maximum utilization of Cursor's project understanding capabilities[4][5]
-- **MCP Integration:** Seamless integration with Model Context Protocol for  functionality[6]
-- **Performance Optimization:** M3 Neural Engine utilization for accelerated analysis[8][9]
-- **Smart Configuration:** Optimal `.cursorrules` and `.cursorignore` setup for AI efficiency[2][14]
-
-### **Project-Agnostic Reliability**
-- **Framework Independence:** Universal patterns applicable across technology stacks[12][10]
-- **Scalability Assurance:** Protocols effective for projects of any size or complexity
-- **Maintainability Focus:** Long-term sustainability through AI-guided best practices
-- **Adaptability Framework:** Flexible implementation based on project-specific needs
-
-### ** User Experience**
-- **Transparent Operations:** Clear AI reasoning and decision documentation
-- **Collaborative Decision-Making:** User involvement in critical structural decisions
-- **Risk Communication:** Clear assessment and mitigation strategy presentation
-- **Continuous Learning:** Protocol improvement through usage pattern analysis
-
----
 EOF
 
     check_no_fake_code "$mdc_file"
@@ -481,6 +304,12 @@ create_error_fixing_protocols() {
 
     # Direct atomic creation with 30% optimized content
     cat > "$mdc_file" << 'EOF'
+---
+description: Error fixing protocols with RCA and validation
+globs: ["**/*"]
+alwaysApply: true
+---
+
 ## 002-error-fixing-protocols
 
 **Objective:** To systematically identify, analyze, and resolve errors within the codebase efficiently and robustly, ensuring minimal disruption and maintaining code quality through AI-assisted root cause analysis and online research validation.
