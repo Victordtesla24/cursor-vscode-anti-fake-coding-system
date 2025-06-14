@@ -314,13 +314,14 @@ perform_comprehensive_validation() {
         "$cursor_dir/rules/004-tech_stack_document.mdc"
     )
 
-    # Check project-local policy files
+    # Check project-local policy files (project root, not scripts directory)
+    local project_root="$(dirname "$current_dir")"
     local project_policy_files=(
-        "$current_dir/.cursor/rules/001-directory-management-protocols.mdc"
-        "$current_dir/.cursor/rules/002-error-fixing-protocols.mdc"
-        "$current_dir/.cursor/rules/003-backend_structure_document.mdc"
-        "$current_dir/.cursor/rules/004-tech_stack_document.mdc"
-        "$current_dir/.cursorrules"
+        "$project_root/.cursor/rules/001-directory-management-protocols.mdc"
+        "$project_root/.cursor/rules/002-error-fixing-protocols.mdc"
+        "$project_root/.cursor/rules/003-backend_structure_document.mdc"
+        "$project_root/.cursor/rules/004-tech_stack_document.mdc"
+        "$project_root/.cursorrules"
     )
 
     log_info "   🌍 Global policy files in: $cursor_dir"
@@ -333,7 +334,7 @@ perform_comprehensive_validation() {
         fi
     done
 
-    log_info "   📁 Project policy files in: $current_dir"
+    log_info "   📁 Project policy files in: $project_root"
     for file in "${project_policy_files[@]}"; do
         if [[ -f "$file" && -s "$file" ]]; then
             log_success "   ✅ Project policy file: $file"
