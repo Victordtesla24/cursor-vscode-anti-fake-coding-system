@@ -7,7 +7,8 @@ set -euo pipefail
 # ─────────────────────────────────────────────────────────────────────────────
 
 readonly TEST_SCRIPT_NAME="anti-fake-validation-tests"
-readonly TEST_LOG_FILE="/var/log/cursor-test-validation.log"
+TEST_LOG_FILE="$(pwd)/../../logs/tests/test-anti-fake-validation.log"
+readonly TEST_LOG_FILE
 
 # Color codes for enhanced output
 readonly RED='\033[0;31m'
@@ -31,12 +32,12 @@ test_log() {
     local color="$3"
     local ts
     ts=$(date '+%Y-%m-%d %H:%M:%S')
-    
+
     # Console output with color
     echo -e "${color}[$ts] [$TEST_SCRIPT_NAME] [$level] $message${NC}"
-    
+
     # Log file output without color codes
-    echo "[$ts] [$TEST_SCRIPT_NAME] [$level] $message" | sudo tee -a "$TEST_LOG_FILE" >/dev/null 2>&1 || true
+    echo "[$ts] [$TEST_SCRIPT_NAME] [$level] $message" | tee -a "$TEST_LOG_FILE" >/dev/null 2>&1 || true
 }
 
 # Specialized logging functions
@@ -49,7 +50,7 @@ test_error() { test_log "ERROR" "$1" "$RED"; }
 assert_file_exists() {
     local file_path="$1"
     local test_name="$2"
-    
+
     ((TESTS_TOTAL++))
     if [[ -f "$file_path" && -s "$file_path" ]]; then
         test_success "✅ PASS: $test_name - File exists: $file_path"
@@ -66,7 +67,7 @@ assert_file_exists() {
 assert_file_not_exists() {
     local file_path="$1"
     local test_name="$2"
-    
+
     ((TESTS_TOTAL++))
     if [[ ! -f "$file_path" ]]; then
         test_success "✅ PASS: $test_name - File correctly absent: $file_path"
@@ -83,7 +84,7 @@ assert_file_not_exists() {
 assert_directory_exists() {
     local dir_path="$1"
     local test_name="$2"
-    
+
     ((TESTS_TOTAL++))
     if [[ -d "$dir_path" ]]; then
         test_success "✅ PASS: $test_name - Directory exists: $dir_path"
@@ -100,7 +101,7 @@ assert_directory_exists() {
 assert_directory_not_exists() {
     local dir_path="$1"
     local test_name="$2"
-    
+
     ((TESTS_TOTAL++))
     if [[ ! -d "$dir_path" ]]; then
         test_success "✅ PASS: $test_name - Directory correctly absent: $dir_path"
@@ -117,7 +118,7 @@ assert_directory_not_exists() {
 assert_no_fake_code() {
     local file_path="$1"
     local test_name="$2"
-    
+
     ((TESTS_TOTAL++))
     if [[ ! -f "$file_path" ]]; then
         test_error "❌ FAIL: $test_name - File does not exist: $file_path"
@@ -125,7 +126,7 @@ assert_no_fake_code() {
         ((TESTS_FAILED++))
         return 1
     fi
-    
+
     # Check for fake code patterns (context-aware)
     if [[ "$file_path" == *.json ]] && grep -q '"stopSequences"' "$file_path" 2>/dev/null; then
         # Skip JSON files with legitimate stopSequences (anti-fake-code config)
@@ -133,7 +134,7 @@ assert_no_fake_code() {
         ((TESTS_PASSED++))
         return 0
     fi
-    
+
     # Check for actual placeholder patterns (exclude policy documentation)
     if grep -q "^\s*//\s*TODO:\|^\s*#\s*TODO:\|^\s*//\s*FIXME:\|^\s*#\s*FIXME:\|^\s*//\s*PLACEHOLDER:\|^\s*#\s*PLACEHOLDER:\|^\s*//\s*\.\.\.\s*$\|^\s*#\s*\.\.\.\s*$" "$file_path" 2>/dev/null; then
         test_error "❌ FAIL: $test_name - Fake/placeholder code detected in: $file_path"
@@ -151,7 +152,7 @@ assert_content_match() {
     local file_path="$1"
     local expected_pattern="$2"
     local test_name="$3"
-    
+
     ((TESTS_TOTAL++))
     if [[ ! -f "$file_path" ]]; then
         test_error "❌ FAIL: $test_name - File does not exist: $file_path"
@@ -159,7 +160,7 @@ assert_content_match() {
         ((TESTS_FAILED++))
         return 1
     fi
-    
+
     if grep -q "$expected_pattern" "$file_path" 2>/dev/null; then
         test_success "✅ PASS: $test_name - Content pattern found in: $file_path"
         ((TESTS_PASSED++))
@@ -177,7 +178,7 @@ assert_json_setting() {
     local setting_key="$2"
     local expected_value="$3"
     local test_name="$4"
-    
+
     ((TESTS_TOTAL++))
     if [[ ! -f "$file_path" ]]; then
         test_error "❌ FAIL: $test_name - JSON file does not exist: $file_path"
@@ -185,7 +186,7 @@ assert_json_setting() {
         ((TESTS_FAILED++))
         return 1
     fi
-    
+
     local actual_value
     # Use robust jq syntax without -r flag for reliable boolean handling
     if ! actual_value=$(jq ".\"$setting_key\"" "$file_path" 2>/dev/null); then
@@ -194,21 +195,21 @@ assert_json_setting() {
         ((TESTS_FAILED++))
         return 1
     fi
-    
+
     # Handle null/missing values
     if [[ "$actual_value" == "null" ]]; then
         actual_value="missing"
     fi
-    
+
     # Convert jq output to comparable format
     if [[ "$expected_value" == "true" || "$expected_value" == "false" ]]; then
         # For boolean comparisons, remove quotes from jq output
         actual_value=$(echo "$actual_value" | sed 's/^"//;s/"$//')
     elif [[ "$expected_value" == "off" || "$expected_value" == "manual" || "$expected_value" == "smart" || "$expected_value" == "onlySnippets" || "$expected_value" == "onExitAndWindowClose" || "$expected_value" == "all" || "$expected_value" == "newWindow" ]]; then
-        # For string values, remove quotes from jq output  
+        # For string values, remove quotes from jq output
         actual_value=$(echo "$actual_value" | sed 's/^"//;s/"$//')
     fi
-    
+
     if [[ "$actual_value" == "$expected_value" ]]; then
         test_success "✅ PASS: $test_name - $setting_key = $expected_value"
         ((TESTS_PASSED++))
@@ -255,33 +256,33 @@ display_test_header() {
 # Test global policy files in correct location
 test_global_policy_files() {
     test_info "🌍 Testing global policy files with correct directory structure..."
-    
+
     local cursor_dir
     cursor_dir=$(detect_cursor_directory)
     local global_rules_dir="$cursor_dir/rules"
-    
+
     test_info "Global Cursor directory: $cursor_dir"
     test_info "Global rules directory: $global_rules_dir"
-    
+
     # Test correct global directory structure
     assert_directory_exists "$global_rules_dir" "Global Rules Directory"
-    
+
     # Test NEW global .mdc files (per requirements)
     assert_file_exists "$global_rules_dir/001-directory-management-protocols.mdc" "Global Directory Management Protocols"
     assert_file_exists "$global_rules_dir/002-error-fixing-protocols.mdc" "Global Error Fixing Protocols"
     assert_file_exists "$global_rules_dir/003-backend_structure_document.mdc" "Global Backend Structure Document"
     assert_file_exists "$global_rules_dir/004-tech_stack_document.mdc" "Global Tech Stack Document"
-    
+
     # Test that OLD global files are REMOVED (per requirements)
     assert_file_not_exists "$global_rules_dir/001-coding-protocols.mdc" "Old Global Coding Protocols REMOVED"
     assert_file_not_exists "$global_rules_dir/004-token-optimization.mdc" "Old Global Token Optimization REMOVED"
-    
+
     # Test embedded content verification in global files
     if [[ -f "$global_rules_dir/001-directory-management-protocols.mdc" ]]; then
         assert_content_match "$global_rules_dir/001-directory-management-protocols.mdc" "Directory Management Protocol" "Global Directory Management Content"
         assert_no_fake_code "$global_rules_dir/001-directory-management-protocols.mdc" "Global Directory Management - No Fake Code"
     fi
-    
+
     if [[ -f "$global_rules_dir/002-error-fixing-protocols.mdc" ]]; then
         assert_content_match "$global_rules_dir/002-error-fixing-protocols.mdc" "Error Fixing Protocol" "Global Error Fixing Content"
         assert_no_fake_code "$global_rules_dir/002-error-fixing-protocols.mdc" "Global Error Fixing - No Fake Code"
@@ -291,28 +292,28 @@ test_global_policy_files() {
 # Test project policy files in correct location
 test_project_policy_files() {
     test_info "📁 Testing project-local policy files with correct directory structure..."
-    
+
     local project_dir="$PWD"
     local project_rules_dir="$project_dir/.cursor/rules"
-    
+
     test_info "Project directory: $project_dir"
     test_info "Project rules directory: $project_rules_dir"
-    
+
     # Test correct project directory structure
     assert_directory_exists "$project_rules_dir" "Project Rules Directory"
-    
+
     # Test project .mdc files (identical to global)
     assert_file_exists "$project_rules_dir/001-directory-management-protocols.mdc" "Project Directory Management Protocols"
     assert_file_exists "$project_rules_dir/002-error-fixing-protocols.mdc" "Project Error Fixing Protocols"
     assert_file_exists "$project_rules_dir/003-backend_structure_document.mdc" "Project Backend Structure Document"
     assert_file_exists "$project_rules_dir/004-tech_stack_document.mdc" "Project Tech Stack Document"
-    
+
     # Test that OLD project files are REMOVED (per requirements)
     assert_file_not_exists "$project_dir/001-coding-protocols.mdc" "Old Project Coding Protocols REMOVED"
     assert_file_not_exists "$project_dir/004-token-optimization.mdc" "Old Project Token Optimization REMOVED"
     assert_file_not_exists "$project_dir/002-directory-management.mdc" "Old Project Directory Management REMOVED"
     assert_file_not_exists "$project_dir/003-error-fixing.mdc" "Old Project Error Fixing REMOVED"
-    
+
     # Test embedded content verification in project files
     if [[ -f "$project_rules_dir/001-directory-management-protocols.mdc" ]]; then
         assert_content_match "$project_rules_dir/001-directory-management-protocols.mdc" "Directory Management Protocol" "Project Directory Management Content"
@@ -323,23 +324,23 @@ test_project_policy_files() {
 # Test consolidated .cursorrules (replaces separate files)
 test_consolidated_cursorrules() {
     test_info "📋 Testing consolidated .cursorrules file..."
-    
+
     local project_dir="$PWD"
     local cursorrules_file="$project_dir/.cursorrules"
-    
+
     # Test consolidated .cursorrules exists
     assert_file_exists "$cursorrules_file" "Consolidated Cursorrules File"
-    
+
     # Test that separate cursor_project_rules.md is REMOVED
     assert_file_not_exists "$project_dir/cursor_project_rules.md" "Separate Project Rules File REMOVED"
-    
+
     if [[ -f "$cursorrules_file" ]]; then
         # Test that .cursorrules contains both global and project content
         assert_content_match "$cursorrules_file" "Global Cursor AI Rules" "Cursorrules Global Section"
         assert_content_match "$cursorrules_file" "Project-Specific Rules" "Cursorrules Project Section"
         assert_content_match "$cursorrules_file" "Zero Fake Code Policy" "Cursorrules Anti-Fake Policy"
         assert_content_match "$cursorrules_file" "Implementation Workflows" "Cursorrules Implementation Workflows"
-        
+
         # Test no fake code in consolidated rules
         assert_no_fake_code "$cursorrules_file" "Consolidated Cursorrules - No Fake Code"
     fi
@@ -348,41 +349,41 @@ test_consolidated_cursorrules() {
 # Test Cline extension-specific isolation
 test_cline_extension_isolation() {
     test_info "🔌 Testing Cline AI extension-specific isolation..."
-    
+
     local cursor_dir
     cursor_dir=$(detect_cursor_directory)
     local project_dir="$PWD"
-    
+
     local global_clinerules_dir="$cursor_dir/.clinerules"
     local project_clinerules_dir="$project_dir/.clinerules"
-    
+
     if detect_cline_extension; then
         test_info "Cline AI extension detected - testing .clinerules creation"
-        
+
         # Test global Cline rules
         assert_directory_exists "$global_clinerules_dir" "Global Clinerules Directory"
         assert_file_exists "$global_clinerules_dir/001-cline-coding-protocols.md" "Global Cline Coding Protocols"
         assert_file_exists "$global_clinerules_dir/002-token-optimization.md" "Global Cline Token Optimization"
-        
+
         # Test project Cline rules
         assert_directory_exists "$project_clinerules_dir" "Project Clinerules Directory"
         assert_file_exists "$project_clinerules_dir/001-cline-coding-protocols.md" "Project Cline Coding Protocols"
         assert_file_exists "$project_clinerules_dir/002-token-optimization.md" "Project Cline Token Optimization"
-        
+
         # Test that Cline files use .md extension (not .mdc)
         if [[ -f "$project_clinerules_dir/001-cline-coding-protocols.md" ]]; then
             assert_content_match "$project_clinerules_dir/001-cline-coding-protocols.md" "Cline AI - Coding Protocols" "Cline Coding Protocols Content"
             assert_no_fake_code "$project_clinerules_dir/001-cline-coding-protocols.md" "Cline Coding Protocols - No Fake Code"
         fi
-        
+
         if [[ -f "$project_clinerules_dir/002-token-optimization.md" ]]; then
             assert_content_match "$project_clinerules_dir/002-token-optimization.md" "Token Optimization Protocols" "Cline Token Optimization Content"
             assert_no_fake_code "$project_clinerules_dir/002-token-optimization.md" "Cline Token Optimization - No Fake Code"
         fi
-        
+
     else
         test_info "Cline AI extension not detected - testing .clinerules absence"
-        
+
         # Test that .clinerules directories are NOT created when Cline is not installed
         assert_directory_not_exists "$global_clinerules_dir" "Global Clinerules Directory ABSENT"
         assert_directory_not_exists "$project_clinerules_dir" "Project Clinerules Directory ABSENT"
@@ -392,16 +393,16 @@ test_cline_extension_isolation() {
 # Test VSCode settings configuration
 test_vscode_settings() {
     test_info "⚙️  Testing VSCode/Cursor settings configuration..."
-    
+
     local cursor_dir
     cursor_dir=$(detect_cursor_directory)
     local settings_file="$cursor_dir/User/settings.json"
-    
+
     test_info "Settings file: $settings_file"
-    
+
     # Test file existence and validity
     assert_file_exists "$settings_file" "VSCode Settings File"
-    
+
     if [[ -f "$settings_file" ]]; then
         # Test JSON validity
         ((TESTS_TOTAL++))
@@ -413,21 +414,21 @@ test_vscode_settings() {
             FAILED_TESTS+=("VSCode Settings JSON Validity")
             ((TESTS_FAILED++))
         fi
-        
+
         # Test critical anti-hallucination settings
         assert_json_setting "$settings_file" "telemetry.enableTelemetry" "false" "Telemetry Disabled"
         assert_json_setting "$settings_file" "crashReporting.enabled" "off" "Crash Reporting Disabled"
         assert_json_setting "$settings_file" "security.workspace.trust.enabled" "true" "Workspace Trust Enabled"
         assert_json_setting "$settings_file" "workbench.enableExperiments" "false" "Experiments Disabled"
         assert_json_setting "$settings_file" "extensions.autoUpdate" "false" "Auto-updates Disabled"
-        
+
         # Test AI extension settings if present
         if grep -q "cline.conservativeMode" "$settings_file" 2>/dev/null; then
             assert_json_setting "$settings_file" "cline.conservativeMode" "true" "Cline Conservative Mode"
             assert_json_setting "$settings_file" "cline.enableValidation" "true" "Cline Validation Enabled"
             assert_json_setting "$settings_file" "cline.preventPlaceholderGeneration" "true" "Cline Placeholder Prevention"
         fi
-        
+
         # Test for fake code in settings
         assert_no_fake_code "$settings_file" "VSCode Settings - No Fake Code"
     fi
@@ -436,7 +437,7 @@ test_vscode_settings() {
 # Test complete portability (no external dependencies)
 test_complete_portability() {
     test_info "🔄 Testing complete portability and embedded content..."
-    
+
     # Test that no external template dependencies exist
     local template_dir="user-docs/temp-rule-templates"
     if [[ -d "$template_dir" ]]; then
@@ -447,11 +448,11 @@ test_complete_portability() {
         ((TESTS_PASSED++))
         ((TESTS_TOTAL++))
     fi
-    
+
     # Test that scripts work from current directory (project-agnostic)
     local current_dir="$PWD"
     test_info "Current working directory: $current_dir"
-    
+
     # Test script executability
     local scripts=(
         "policy-file-generator.sh"
@@ -460,7 +461,7 @@ test_complete_portability() {
         "cursor-optimization-policies.sh"
         "master-cursor-hardening.sh"
     )
-    
+
     for script in "${scripts[@]}"; do
         if [[ -f "$script" ]]; then
             ((TESTS_TOTAL++))
@@ -472,7 +473,7 @@ test_complete_portability() {
                 FAILED_TESTS+=("Script Executable: $script")
                 ((TESTS_FAILED++))
             fi
-            
+
             # Test for embedded content (no external file reads)
             if grep -q "user-docs/temp-rule-templates" "$script" 2>/dev/null; then
                 test_error "❌ FAIL: Script still references external templates: $script"
@@ -484,7 +485,7 @@ test_complete_portability() {
                 ((TESTS_PASSED++))
                 ((TESTS_TOTAL++))
             fi
-            
+
             # Test for fake code in scripts
             assert_no_fake_code "$script" "Shell Script $(basename "$script") - No Fake Code"
         else
@@ -496,14 +497,14 @@ test_complete_portability() {
 # Test extension vs global policy separation
 test_extension_global_separation() {
     test_info "🔐 Testing extension vs global policy separation..."
-    
+
     local cursor_dir
     cursor_dir=$(detect_cursor_directory)
     local project_dir="$PWD"
-    
+
     # Test that global policies exclude extension-specific content
     local global_rules_dir="$cursor_dir/rules"
-    
+
     if [[ -f "$global_rules_dir/001-directory-management-protocols.mdc" ]]; then
         # Test that global policies don't contain Cline-specific content
         ((TESTS_TOTAL++))
@@ -516,15 +517,15 @@ test_extension_global_separation() {
             ((TESTS_FAILED++))
         fi
     fi
-    
+
     # Test that extension policies are completely separate
     if detect_cline_extension; then
         local project_clinerules_dir="$project_dir/.clinerules"
-        
+
         if [[ -f "$project_clinerules_dir/001-cline-coding-protocols.md" ]]; then
             # Test that Cline policies contain Cline-specific content
             assert_content_match "$project_clinerules_dir/001-cline-coding-protocols.md" "Cline AI" "Cline Policy Contains Cline Content"
-            
+
             # Test that Cline policies use .md extension
             ((TESTS_TOTAL++))
             if [[ "$project_clinerules_dir/001-cline-coding-protocols.md" == *.md ]]; then
@@ -542,13 +543,13 @@ test_extension_global_separation() {
 # Test optimization directory structure
 test_optimization_structure() {
     test_info "🔧 Testing optimization directory structure..."
-    
+
     local cursor_dir
     cursor_dir=$(detect_cursor_directory)
     local optimization_dir="$cursor_dir/optimization"
-    
+
     test_info "Optimization directory: $optimization_dir"
-    
+
     # Test directory structure (if created by optimization script)
     if [[ -d "$optimization_dir" ]]; then
         local dirs=(
@@ -556,7 +557,7 @@ test_optimization_structure() {
             "$optimization_dir/validation"
             "$optimization_dir/file-management"
         )
-        
+
         for dir in "${dirs[@]}"; do
             if [[ -d "$dir" ]]; then
                 test_success "✅ PASS: Optimization Directory - $(basename "$dir") exists"
@@ -564,7 +565,7 @@ test_optimization_structure() {
                 ((TESTS_TOTAL++))
             fi
         done
-        
+
         # Test configuration files
         if [[ -f "$optimization_dir/rag/rag-config.json" ]]; then
             assert_no_fake_code "$optimization_dir/rag/rag-config.json" "RAG Config - No Fake Code"
@@ -580,12 +581,12 @@ test_optimization_structure() {
 # Test VSCode CLI integration
 test_vscode_cli_integration() {
     test_info "🔗 Testing VSCode/Cursor CLI integration..."
-    
+
     ((TESTS_TOTAL++))
     if command -v code >/dev/null 2>&1; then
         test_success "✅ PASS: VSCode CLI - Command available"
         ((TESTS_PASSED++))
-        
+
         # Test extension listing
         ((TESTS_TOTAL++))
         if code --list-extensions >/dev/null 2>&1; then
@@ -593,14 +594,14 @@ test_vscode_cli_integration() {
             ext_count=$(code --list-extensions | wc -l | tr -d ' ')
             test_success "✅ PASS: VSCode CLI - Extensions listed ($ext_count found)"
             ((TESTS_PASSED++))
-            
+
             # Test Cline extension detection accuracy
             if code --list-extensions 2>/dev/null | grep -q "saoudrizwan.claude-dev"; then
                 test_info "Cline extension detected in CLI listing"
             else
                 test_info "Cline extension not detected in CLI listing"
             fi
-            
+
         else
             test_error "❌ FAIL: VSCode CLI - Cannot list extensions"
             FAILED_TESTS+=("VSCode CLI Extension Listing")
@@ -616,22 +617,22 @@ test_vscode_cli_integration() {
 # Generate comprehensive test report
 generate_test_report() {
     test_info "📊 Generating comprehensive test report..."
-    
+
     local report_file
     report_file="anti-fake-validation-report-$(date +%Y%m%d_%H%M%S).txt"
-    
+
     local success_rate=0
     if [[ $TESTS_TOTAL -gt 0 ]]; then
         success_rate=$((TESTS_PASSED * 100 / TESTS_TOTAL))
     fi
-    
+
     local cursor_dir
     cursor_dir=$(detect_cursor_directory)
     local cline_status="NOT DETECTED"
     if detect_cline_extension; then
         cline_status="DETECTED"
     fi
-    
+
     cat > "$report_file" << EOF
 ═══════════════════════════════════════════════════════════════════════════════
             ANTI-FAKE CODE VALIDATION TEST REPORT - PROJECT AGNOSTIC
@@ -757,15 +758,15 @@ EOF
 # Main test execution
 main() {
     # Initialize test log file
-    sudo mkdir -p "$(dirname "$TEST_LOG_FILE")" 2>/dev/null || true
-    sudo touch "$TEST_LOG_FILE" 2>/dev/null || true
-    sudo chmod 644 "$TEST_LOG_FILE" 2>/dev/null || true
-    
+    mkdir -p "$(dirname "$TEST_LOG_FILE")" 2>/dev/null || true
+    touch "$TEST_LOG_FILE" 2>/dev/null || true
+    chmod 644 "$TEST_LOG_FILE" 2>/dev/null || true
+
     display_test_header
-    
+
     test_info "🚀 Starting comprehensive project-agnostic anti-fake code validation"
     test_info "Target: Complete system validation with extension isolation and embedded content"
-    
+
     # Execute all test suites in logical order
     test_global_policy_files
     test_project_policy_files
@@ -776,20 +777,20 @@ main() {
     test_complete_portability
     test_optimization_structure
     test_vscode_cli_integration
-    
+
     # Generate final report
     echo -e "\n${BLUE}╔══════════════════════════════════════════════════════════════╗${NC}"
     echo -e "${BLUE}║${NC} ${WHITE}Final Test Results & Report Generation${NC} ${BLUE}                      ║${NC}"
     echo -e "${BLUE}╚══════════════════════════════════════════════════════════════╝${NC}\n"
-    
+
     generate_test_report
-    
+
     # Final result with enhanced criteria
     local success_rate=0
     if [[ $TESTS_TOTAL -gt 0 ]]; then
         success_rate=$((TESTS_PASSED * 100 / TESTS_TOTAL))
     fi
-    
+
     if [[ $TESTS_FAILED -eq 0 ]]; then
         echo -e "\n${GREEN} ╔════════════════════════════════════════════════════════════╗${NC}"
         echo -e "${GREEN} ║${NC} ${WHITE}🎉 SUCCESS: ALL PROJECT-AGNOSTIC REQUIREMENTS VERIFIED! 🎉${NC} ${GREEN}║${NC}"

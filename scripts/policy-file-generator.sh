@@ -10,13 +10,14 @@ set -euo pipefail
 # Creates policy files for Cursor AI (VS Code) - works from any git clone location
 # All template content embedded using heredoc - ZERO external dependencies
 readonly SCRIPT_NAME="policy-file-generation"
-readonly LOG_FILE="/var/log/cursor-setup.log"
+LOG_FILE="$(pwd)/logs/scripts/policy-file-generator.log"
+readonly LOG_FILE
 
 # Ensure log file exists and is writable
-if ! sudo test -f "$LOG_FILE"; then
-    sudo mkdir -p "$(dirname "$LOG_FILE")"
-    sudo touch "$LOG_FILE"
-    sudo chmod 644 "$LOG_FILE"
+if ! test -f "$LOG_FILE"; then
+    mkdir -p "$(dirname "$LOG_FILE")"
+    touch "$LOG_FILE"
+    chmod 644 "$LOG_FILE"
 fi
 
 # Logging function with proper error handling
@@ -25,7 +26,7 @@ script_log() {
     local ts
     ts=$(date '+%Y-%m-%d %H:%M:%S')
     # Safer logging with error handling to prevent directory creation bug
-    if echo "[$ts] [$SCRIPT_NAME] $message" | sudo tee -a "$LOG_FILE" >/dev/null 2>&1; then
+    if echo "[$ts] [$SCRIPT_NAME] $message" | tee -a "$LOG_FILE" >/dev/null 2>&1; then
         echo "[$ts] [$SCRIPT_NAME] $message"
     else
         # Fallback if log file write fails - output to console only

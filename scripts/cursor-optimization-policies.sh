@@ -13,7 +13,8 @@ set -euo pipefail
 # Cursor Optimization and Anti-Hallucination Policies Configuration Script
 # Implements comprehensive optimization policies for Cursor AI
 readonly SCRIPT_NAME="cursor-optimization"
-readonly LOG_FILE="/var/log/cursor-setup.log"
+LOG_FILE="$(pwd)/logs/scripts/cursor-optimization-policies.log"
+readonly LOG_FILE
 
 # Logging function with proper error handling
 script_log() {
@@ -21,7 +22,7 @@ script_log() {
     local ts
     ts=$(date '+%Y-%m-%d %H:%M:%S')
     # Safer logging with error handling to prevent directory creation bug
-    if echo "[$ts] [$SCRIPT_NAME] $message" | sudo tee -a "$LOG_FILE" >/dev/null 2>&1; then
+    if echo "[$ts] [$SCRIPT_NAME] $message" | tee -a "$LOG_FILE" >/dev/null 2>&1; then
         echo "[$ts] [$SCRIPT_NAME] $message"
     else
         # Fallback if log file write fails - output to console only

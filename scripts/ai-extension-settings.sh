@@ -11,13 +11,15 @@ set -euo pipefail
 # Configures AI extension settings for anti-hallucination controls with enhanced extension isolation
 # Works from any git clone location with embedded configuration
 readonly SCRIPT_NAME="ai-extension-settings"
-readonly LOG_FILE="/var/log/cursor-setup.log"
+LOG_FILE="$(pwd)/logs/scripts/ai-extension-settings.log"
+readonly LOG_FILE
 
 log() {
     local ts msg
     ts=$(date '+%Y-%m-%d %H:%M:%S')
     msg="$*"
     # Improved logging with better fallback handling
+    mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || true
     echo "[$ts] [$SCRIPT_NAME] $msg" | tee -a "$LOG_FILE" 2>/dev/null || echo "[$ts] [$SCRIPT_NAME] $msg"
 }
 

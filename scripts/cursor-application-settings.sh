@@ -10,7 +10,8 @@ set -euo pipefail
 # Cursor Application Settings Configuration Script - Complete Project Agnostic Implementation
 # Configures Cursor application settings for security and anti-hallucination
 # Works from any git clone location with embedded configuration
-readonly LOG_FILE="/var/log/cursor-setup.log"
+LOG_FILE="$(pwd)/logs/scripts/cursor-application-settings.log"
+readonly LOG_FILE
 readonly SCRIPT_TAG="[application-settings]"
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -20,7 +21,7 @@ log() {
     ts="$(date '+%Y-%m-%d %H:%M:%S')"
     msg="$1"
     # Safer logging with error handling to prevent directory creation bug
-    if echo "[$ts] $SCRIPT_TAG $msg" | sudo tee -a "$LOG_FILE" >/dev/null 2>&1; then
+    if echo "[$ts] $SCRIPT_TAG $msg" | tee -a "$LOG_FILE" >/dev/null 2>&1; then
         echo "[$ts] $SCRIPT_TAG $msg"
     else
         # Fallback if log file write fails - output to console only
