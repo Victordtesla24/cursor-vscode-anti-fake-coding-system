@@ -9,14 +9,14 @@
     - `policy-file-generator.sh`
     - `test-anti-fake-validation.sh`
 
-3. Update the shell scripts mentioned above, by modifying the logic where the configurations, settings and policy implementation and adherence to the policy documents (`.mdc`) is separated - one for `GLOBAL` and other for extension `SPECIFIC`, for example `Cline AI Extensions`. 
+3. Update the shell scripts mentioned above, by modifying the logic where the configurations, settings and policy implementation and adherence to the policy documents (`.mdc`) is separated - one for `GLOBAL` and other for extension `SPECIFIC`, for example `Cline AI Extensions`.
    - There must be a clear distinction between implementing and applying these policies - and must be carefully configured to ensure `Cline AI Extension` Specific Policies ***are not*** applied `Globally`
    - The `Extension Specific` Policy documents - in this case `Cline AI`, must be saved in `.clinerules/` directory in Default (`~/Library/Application Support/Cursor/.clinerules/`) and Project Directory (`./.clinerules/`) respectively
    - The `Extension Specific` Policy documents - in this case `Cline AI`, must be saved with `.md` file extension compared to `Global` Policy documents saved with `.mdc` file extensions
    - **CRITICAL**: If `Cline AI` extension is NOT installed, `.clinerules/` directory must NOT be created at all
    - The `Extension Specific` Policy documents - in this case `Cline AI`, there must be tests that verify and validate clear separation of Policy File creations, their locations, their extensions, their implementation and application is `SEPARATE` to the `GLOBAL` Policy File creations
 
-   **IMPORTANT NOTES** 
+   **IMPORTANT NOTES**
     1. The Global Policy Files reside in `~/Library/Application Support/Cursor/rules/`
     2. The Extension Specific Files reside in `~/Library/Application Support/Cursor/.clinerules/` (only if extension detected)
     3. Extension isolation achieved through separate scripts and distinct directory structures
@@ -42,7 +42,7 @@
       - created & saved in `~/Library/Application Support/Cursor/rules/` and `./.cursor/rules/` directories
       - keep current embedded content (no external dependency)
 
-6. Update the `policy-file-generator.sh` script, to ensure **ONLY** `.cursorrules` exists with **TWO DISTINCT CHAPTERS**: 
+6. Update the `policy-file-generator.sh` script, to ensure **ONLY** `.cursorrules` exists with **TWO DISTINCT CHAPTERS**:
    - **Chapter 1**: Global Cursor AI Rules (from embedded `my-cursorrules.md` content)
    - **Chapter 2**: Project-Specific Rules (from embedded `cursor_project_rules.md` content)
    - **ELIMINATE**: Separate `cursor_project_rules.md` file completely after merging into `.cursorrules`
@@ -66,7 +66,7 @@ Transform the existing Cursor AI hardening shell scripts into completely project
 ### 1. **Complete Project-Agnostic Transformation with Embedded Content**
 Update the following shell scripts to work from **ANY** git clone location:
 - `ai-extension-settings.sh`
-- `cursor-application-settings.sh` 
+- `cursor-application-settings.sh`
 - `cursor-optimization-policies.sh`
 - `policy-file-generator.sh`
 - `test-anti-fake-validation.sh`
@@ -161,7 +161,7 @@ create_consolidated_cursorrules() {
 
 ---
 
-# Project-Specific Rules  
+# Project-Specific Rules
 [Embedded exact content from cursor_project_rules.md]
 EOF
 }
@@ -209,7 +209,7 @@ Update `test-anti-fake-validation.sh` to verify **every single requirement** fro
 
 **Embedded Content Implementation:**
 - **No external file reads** - all content embedded in scripts using heredoc/base64
-- **Atomic operations** - create backups before any file modifications  
+- **Atomic operations** - create backups before any file modifications
 - **Verify** embedded content accuracy matches original templates
 - **Log** all file operations with full paths
 
@@ -252,3 +252,12 @@ Update `test-anti-fake-validation.sh` to verify **every single requirement** fro
 10. ✅ **100% Requirements Coverage**: Every Raw Requirement implemented using embedded content
 11. ✅ **Absolute Zero Fake Code**: Anti-fake code enforcement active across all environments
 12. ✅ **Scratch Setup Success**: `chmod +x master-cursor-hardening.sh && ./master-cursor-hardening.sh` works from fresh clone
+
+
+
+
+
+
+
+
+

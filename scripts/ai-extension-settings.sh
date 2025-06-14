@@ -62,7 +62,7 @@ detect_cursor_settings() {
 # Check if an existing hardening marker is present (idempotency)
 check_extension_idempotency() {
     local settings="$1"
-    if [ -f "$settings" ] && grep -q '"cline.conservativeMode": true' "$settings" && grep -q '"cline.strictModeEnabled": true' "$settings" && grep -q '"cline.maxFileSize": 300' "$settings"; then
+    if [ -f "$settings" ] && grep -q '"cline.conservativeMode": true' "$settings" && grep -q '"cline.strictModeEnabled": true' "$settings" && grep -q '"cline.maxFileSize": 300' "$settings" && grep -q '"cline.telemetryEnabled": false' "$settings" && grep -q '"cline.allowAnonymousUsageReporting": false' "$settings"; then
         return 0
     fi
     return 1
@@ -100,6 +100,11 @@ configure_cline_settings() {
         "cline.enableContextValidation": true,
         "cline.enableCodeReview": true,
         "cline.strictModeEnabled": true,
+        "cline.telemetryEnabled": false,
+        "cline.allowAnonymousUsageReporting": false,
+        "cline.allowErrorReporting": false,
+        "cline.enableUsageAnalytics": false,
+        "cline.enableCrashReporting": false,
         "cline.memorySettings": {
             "enableMemory": true,
             "sessionExpiration": 86400,
@@ -236,6 +241,11 @@ verify_extension_settings() {
             '"cline.requireExplicitInstructions": true'
             '"cline.strictModeEnabled": true'
             '"cline.maxFileSize": 300'
+            '"cline.telemetryEnabled": false'
+            '"cline.allowAnonymousUsageReporting": false'
+            '"cline.allowErrorReporting": false'
+            '"cline.enableUsageAnalytics": false'
+            '"cline.enableCrashReporting": false'
         )
 
         for check in "${cline_checks[@]}"; do

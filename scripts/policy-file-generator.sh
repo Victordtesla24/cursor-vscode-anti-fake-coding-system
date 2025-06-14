@@ -982,7 +982,7 @@ EOF
 create_cline_coding_protocols() {
     local clinerules_dir="$1"
     mkdir -p "$clinerules_dir"
-    local md_file="$clinerules_dir/001-cline-coding-protocols.md"
+    local md_file="$clinerules_dir/cline-coding-protocols.md"
 
     # Direct atomic creation with 30% optimized embedded content
     cat > "$md_file" << 'EOF'
@@ -1042,7 +1042,7 @@ EOF
 create_cline_token_optimization() {
     local clinerules_dir="$1"
     mkdir -p "$clinerules_dir"
-    local md_file="$clinerules_dir/002-token-optimization.md"
+    local md_file="$clinerules_dir/cline-token-optimization.md"
 
     # Direct atomic creation with 30% optimized embedded content
     cat > "$md_file" << 'EOF'
@@ -1098,7 +1098,7 @@ EOF
 create_cline_coding_protocols_sudo() {
     local clinerules_dir="$1"
     mkdir -p "$clinerules_dir"
-    local md_file="$clinerules_dir/001-cline-coding-protocols.md"
+    local md_file="$clinerules_dir/cline-coding-protocols.md"
 
     # Direct atomic creation with 30% optimized embedded content
     cat > "$md_file" << 'EOF'
@@ -1157,7 +1157,7 @@ EOF
 create_cline_token_optimization_sudo() {
     local clinerules_dir="$1"
     mkdir -p "$clinerules_dir"
-    local md_file="$clinerules_dir/002-token-optimization.md"
+    local md_file="$clinerules_dir/token-optimization.md"
 
     # Direct atomic creation with 30% optimized embedded content
     cat > "$md_file" << 'EOF'
