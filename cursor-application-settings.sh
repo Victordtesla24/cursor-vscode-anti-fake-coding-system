@@ -61,7 +61,7 @@ detect_cursor_directory() {
 # Apply settings atomically - ZERO BACKUP STRATEGY
 apply_settings_atomic() {
     local settings_file="$1"
-    
+
     # Direct atomic jq transformation - production grade
     local tmp
     tmp="$(dirname "$settings_file")/settings.tmp.$$"
@@ -71,6 +71,9 @@ apply_settings_atomic() {
         | .["telemetry.enableTelemetry"] = false
         | .["crashReporting.enabled"] = "off"
         | .["telemetry.telemetryLevel"] = "off"
+        # Cline (Claude Dev) extension telemetry settings
+        | .["saoudrizwan.claude-dev.telemetryEnabled"] = false
+        | .["cline.telemetryEnabled"] = false
         # Safe autocompletion with enhanced controls
         | .["editor.acceptSuggestionOnCommitCharacter"] = false
         | .["editor.acceptSuggestionOnEnter"] = "smart"
@@ -119,7 +122,7 @@ apply_settings_atomic() {
         | .["git.enableSmartCommit"] = false
         | .["scm.diffDecorations"] = "all"
     ' "$settings_file" > "$tmp" || error_exit "Failed to apply settings transformation"
-    
+
     # Preserve permissions and atomic move
     if command -v stat >/dev/null 2>&1; then
         local uid gid mode
@@ -134,7 +137,7 @@ apply_settings_atomic() {
             chmod "$mode" "$tmp" || true
         fi
     fi
-    
+
     mv "$tmp" "$settings_file" || error_exit "Failed to finalize settings update"
 }
 
@@ -174,6 +177,9 @@ main() {
         'telemetry.enableTelemetry false'
         'crashReporting.enabled "off"'
         'telemetry.telemetryLevel "off"'
+        # Cline (Claude Dev) extension telemetry settings
+        'saoudrizwan.claude-dev.telemetryEnabled false'
+        'cline.telemetryEnabled false'
         # Safe autocompletion
         'editor.acceptSuggestionOnCommitCharacter false'
         'editor.acceptSuggestionOnEnter "smart"'
@@ -241,7 +247,7 @@ main() {
     local total correct
     total=${#CHECK_SETTINGS[@]}
     correct=0
-    
+
     for setting in "${CHECK_SETTINGS[@]}"; do
         local key expected_val jq_filter
         key="${setting%% *}"
