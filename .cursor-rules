@@ -1,6 +1,6 @@
 {
   "codeStyle": {
-    "preferredFrameworks": ["react", "next.js", "bash"],
+    "preferredFrameworks": ["react", "next.js"],
     "preferredLanguages": ["typescript", "javascript"],
     "indentationStyle": "spaces",
     "indentationSize": 2,
@@ -13,12 +13,10 @@
       "console.log",
       "mock",
       "dummy",
-      "fake",
-      "dry run",
-      "for production implementation in future"
+      "fake"
     ],
     "enforcedPatterns": [
-      "strict shellcheck, typescript, syntaxt checking",
+      "strict type checking",
       "error handling",
       "input validation"
     ],

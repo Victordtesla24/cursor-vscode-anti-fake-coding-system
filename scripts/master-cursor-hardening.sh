@@ -315,7 +315,8 @@ perform_comprehensive_validation() {
     )
 
     # Check project-local policy files (project root, not scripts directory)
-    local project_root="$(dirname "$current_dir")"
+    local project_root
+    project_root="$(dirname "$current_dir")"
     local project_policy_files=(
         "$project_root/.cursor/rules/001-directory-management-protocols.mdc"
         "$project_root/.cursor/rules/002-error-fixing-protocols.mdc"
