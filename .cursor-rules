@@ -1,7 +1,16 @@
 {
+  "version": "2025-06-17",
+  "changelog": "Added suppression-hardening, typo fixes, and expanded linting/security rules.",
   "codeStyle": {
-    "preferredFrameworks": ["react", "next.js"],
-    "preferredLanguages": ["typescript", "javascript"],
+    "preferredFrameworks": [
+      "react",
+      "next.js",
+      "bash"
+    ],
+    "preferredLanguages": [
+      "typescript",
+      "javascript"
+    ],
     "indentationStyle": "spaces",
     "indentationSize": 2,
     "maxLineLength": 80
@@ -13,15 +22,60 @@
       "console.log",
       "mock",
       "dummy",
-      "fake"
+      "fake",
+      "dry run",
+      "stub",
+      "for future implementation",
+      "for future production implementation",
+      "placeholder",
+      "simulate",
+      "simulation",
+      "basic function",
+      "basic functionality",
+      "basic code",
+      "temp function",
+      "temp code",
+      "temp functionality",
+      "temp code implementation",
+      "temp function implementation",
+      "ts-ignore",
+      "eslint-disable",
+      "eslint-disable-next-line",
+      "@suppresswarnings",
+      "#pragma",
+      "#pragma warning disable",
+      "System.Diagnostics.Debug",
+      "print(",
+      "warn-disable"
     ],
     "enforcedPatterns": [
-      "strict type checking",
+      "strict shellcheck, typescript, syntax checking",
       "error handling",
-      "input validation"
+      "input validation",
+      "typescript strict mode",
+      "eslint no-console, no-debugger",
+      "shellcheck pass",
+      "unit tests required",
+      "comprehensive inline JSDoc / TSDoc",
+      "OWASP input validation",
+      "no warning suppression directives"
     ],
     "codeComplexity": "low",
     "documentationLevel": "comprehensive"
+  },
+  "allowList": {
+    "languages": [
+      "typescript",
+      "javascript",
+      "bash"
+    ],
+    "logging": [
+      "structured logger only"
+    ],
+    "testing": [
+      "jest",
+      "vitest"
+    ]
   },
   "security": {
     "enforceInputValidation": true,
